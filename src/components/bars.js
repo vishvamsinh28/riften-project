@@ -1,32 +1,7 @@
-/** CSS chart atoms. Server-safe; identity is carried by labels, magnitude by one hue. */
-
-export function BarRow({ label, sub, display, share, href, color = "var(--color-chart)" }) {
-  const inner = (
-    <>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="truncate font-mono text-xs text-ink">{label}</span>
-        <span className="num shrink-0 text-xs text-ink-dim">
-          {display}
-          {sub ? <span className="ml-1.5 text-ink-mute">{sub}</span> : null}
-        </span>
-      </div>
-      <div className="mt-1 h-1 w-full rounded-full bg-overlay">
-        <div
-          className="h-1 rounded-full transition-[width]"
-          style={{ width: `${Math.max(1.5, share * 100)}%`, background: color }}
-        />
-      </div>
-    </>
-  );
-  if (href) {
-    return (
-      <a href={href} className="-mx-2 block rounded-md px-2 py-1.5 hover:bg-raised">
-        {inner}
-      </a>
-    );
-  }
-  return <div className="py-1.5">{inner}</div>;
-}
+/**
+ * CSS chart atoms, server-safe. Identity is carried by labels and position,
+ * magnitude by a single hue — no categorical rainbow anywhere.
+ */
 
 /** Latency histogram: vertical bars, hover reveals bucket + count. */
 export function Histogram({ buckets, maxCount, unit = "" }) {

@@ -21,6 +21,10 @@ export const metadata = {
   description: "Turn router traces into training data.",
 };
 
+/**
+ * Root shell: fonts, sticky top navigation, content column, footer.
+ * Every page renders inside the main column; nav state lives in NavLinks.
+ */
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>

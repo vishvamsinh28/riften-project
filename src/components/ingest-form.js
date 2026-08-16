@@ -38,6 +38,23 @@ const SAMPLE = [
   },
 ];
 
+/**
+ * Detect whether the pasted body is one whole JSON value (object or array)
+ * versus NDJSON. Parse failure is the signal here, not an error to surface.
+ */
+function detectSingleJson(body) {
+  try {
+    JSON.parse(body);
+    return true;
+  } catch {
+    return false; // not one JSON document -> treat as NDJSON, one object per line
+  }
+}
+
+/**
+ * Paste-and-ingest form. Posts to /api/ingest, renders the per-row
+ * accept/reject report, and refreshes server components on success.
+ */
 export function IngestForm() {
   const router = useRouter();
   const [text, setText] = useState("");
@@ -55,26 +72,22 @@ export function IngestForm() {
     }
     startTransition(async () => {
       try {
-        // A body that parses whole is one JSON value (object or array);
-        // anything else is treated as NDJSON, one object per line.
-        let isSingleJson = false;
-        try {
-          JSON.parse(body);
-          isSingleJson = true;
-        } catch {}
+        const isSingleJson = detectSingleJson(body);
         const res = await fetch("/api/ingest", {
           method: "POST",
           headers: { "Content-Type": isSingleJson ? "application/json" : "application/x-ndjson" },
           body,
         });
         const json = await res.json();
-        if (json.error) {
-          setError(json.error);
-          return;
+        // The API contract: { success, accepted?, rejected?, total?, error? }.
+        // A failed request may still carry per-row detail worth showing.
+        if (json?.success === false) setError(json.error ?? "Ingest failed.");
+        if (Array.isArray(json?.rejected)) {
+          setResult({ accepted: json.accepted ?? 0, rejected: json.rejected });
         }
-        setResult(json);
-        router.refresh();
-      } catch (e) {
+        if (json?.success && (json.accepted ?? 0) > 0) router.refresh();
+      } catch (err) {
+        console.error("[ingest-form]", err);
         setError("Request failed — is the dev server running?");
       }
     });

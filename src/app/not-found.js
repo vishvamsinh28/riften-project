@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+/**
+ * 404 boundary — reached mostly via stale trace ids after a re-seed,
+ * so the copy points back at the trace explorer.
+ */
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center py-24 text-center">

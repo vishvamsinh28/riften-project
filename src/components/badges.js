@@ -1,4 +1,7 @@
-/** Small display atoms shared across pages. Server-safe (no state). */
+/**
+ * Small display atoms shared across pages: model chips, status dots,
+ * feedback signal badges. Server-safe (no state, no handlers).
+ */
 
 const MODEL_TINTS = {
   anthropic: "border-[#c8794a]/35 text-[#e0a37e]",
@@ -9,6 +12,7 @@ const MODEL_TINTS = {
   unknown: "border-edge-strong text-ink-dim",
 };
 
+/** Bordered model-name chip, tinted per provider; unknown providers stay neutral. */
 export function ModelChip({ model, provider, className = "" }) {
   const tint = MODEL_TINTS[provider] ?? MODEL_TINTS.unknown;
   return (
@@ -21,6 +25,7 @@ export function ModelChip({ model, provider, className = "" }) {
   );
 }
 
+/** HTTP status as a semantic dot (green 2xx / amber 4xx / red 5xx) plus the code. */
 export function StatusDot({ status }) {
   const cls = status === 200 ? "bg-good" : status >= 500 ? "bg-bad" : "bg-warn";
   return (
@@ -37,6 +42,10 @@ const RATING_STYLES = {
   weak: "border-warn/40 text-warn",
 };
 
+/**
+ * One quality-signal badge (rating, continuation, retry, truncation…).
+ * Kind selects the tint; unknown kinds fall back to neutral styling.
+ */
 export function Signal({ kind, children, title }) {
   const styles = {
     strong: RATING_STYLES.strong,
@@ -60,10 +69,10 @@ export function Signal({ kind, children, title }) {
   );
 }
 
-/** Compact signal strip for table rows. */
+/** Compact strip of every quality signal a trace carries, for table rows. */
 export function SignalStrip({ trace }) {
-  const f = trace.feedback;
-  const d = trace.derived;
+  const f = trace?.feedback ?? {};
+  const d = trace?.derived ?? {};
   const out = [];
   if (f.rating) out.push(<Signal key="r" kind={f.rating} title={`rated ${f.rating}`}>{f.rating}</Signal>);
   if (f.continuation)
@@ -79,6 +88,7 @@ export function SignalStrip({ trace }) {
   return out.length ? <span className="inline-flex flex-wrap gap-1">{out}</span> : <span className="text-ink-mute">·</span>;
 }
 
+/** finish_reason in tinted mono text; null (failed/cut requests) renders an em dash. */
 export function FinishReason({ reason }) {
   if (!reason) return <span className="text-ink-mute">—</span>;
   const tint =

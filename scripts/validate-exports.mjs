@@ -3,10 +3,15 @@
  * Assertion suite for the export engine, run against the live corpus.
  * Exits non-zero on any invariant violation.
  */
-import { getStore, normalizeTrace } from "../src/lib/store.js";
-import { buildSftExport, buildPreferenceExport, toJsonl } from "../src/lib/exports.js";
+import { getStore } from "../src/lib/store.js";
+import { normalizeTrace } from "../src/lib/normalize.js";
+import { buildSftExport } from "../src/lib/export-sft.js";
+import { buildPreferenceExport } from "../src/lib/export-preferences.js";
+import { toJsonl } from "../src/lib/export-helpers.js";
+import { checkLineShape } from "./validate-helpers.mjs";
 
 let failures = 0;
+/** Record one assertion: log and count a failure when the condition is false. */
 const check = (cond, msg) => {
   if (!cond) {
     failures += 1;
@@ -50,38 +55,8 @@ for (const t of sft.included) {
   check(t.feedback.rating !== "weak", `weak-rated answer in SFT: ${t.id}`);
 }
 
-/* ---- line shape: valid OpenAI chat format ---- */
-const ROLES = new Set(["system", "user", "assistant", "tool"]);
-for (const line of sft.lines) {
-  check(Array.isArray(line.messages) && line.messages.length >= 2, "line with <2 messages");
-  const last = line.messages[line.messages.length - 1];
-  check(last.role === "assistant", "SFT line does not end with an assistant message");
-  check(last.weight !== 0, "SFT line's final answer is loss-masked — nothing to train on");
-  for (const m of line.messages) {
-    check(ROLES.has(m.role), `bad role ${m.role}`);
-    if (m.role === "tool") {
-      check(typeof m.tool_call_id === "string", "tool message missing tool_call_id");
-      check(typeof m.content === "string", "tool message content is not a string");
-    }
-    if (m.tool_calls) {
-      for (const c of m.tool_calls) {
-        check(c.type === "function" && typeof c.function?.name === "string", "malformed tool_call");
-        try { JSON.parse(c.function.arguments); } catch { check(false, "tool_call arguments not JSON"); }
-      }
-    }
-  }
-  // every assistant tool_calls message must have matching tool results after it
-  line.messages.forEach((m, i) => {
-    if (m.role === "assistant" && m.tool_calls && i < line.messages.length - 1) {
-      for (const c of m.tool_calls) {
-        check(line.messages.slice(i + 1).some((r) => r.role === "tool" && r.tool_call_id === c.id),
-          `tool_call ${c.id} has no tool result in transcript`);
-      }
-    }
-  });
-  check(line.metadata && typeof line.metadata.model === "string" && typeof line.metadata.latency_ms === "number",
-    "line missing metadata");
-}
+/* ---- line shape: valid OpenAI chat format (helpers keep nesting flat) ---- */
+for (const line of sft.lines) checkLineShape(check, line);
 
 /* ---- rejected answers embedded in kept transcripts must be loss-masked ---- */
 const rejectedAnswers = new Map(); // session -> Set of rejected answer payloads

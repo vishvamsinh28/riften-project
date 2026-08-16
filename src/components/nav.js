@@ -10,6 +10,10 @@ const LINKS = [
   { href: "/ingest", label: "Ingest" },
 ];
 
+/**
+ * Top navigation tabs with active-route highlighting. Client component
+ * because active state depends on usePathname.
+ */
 export function NavLinks() {
   const pathname = usePathname();
   return (

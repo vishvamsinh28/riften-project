@@ -1,4 +1,4 @@
-import { corpusStats } from "@/lib/store";
+import { corpusStats } from "@/lib/stats";
 import { fmtCount } from "@/lib/format";
 import { IngestForm } from "@/components/ingest-form";
 
@@ -27,6 +27,10 @@ const FIELDS = [
   ["feedback.continuation", "accepted · rejected", false],
 ];
 
+/**
+ * Ingest page: the paste-in form plus the direct POST endpoint recipe and
+ * the accepted trace shape, with live counts of what the store holds.
+ */
 export default function IngestPage() {
   const stats = corpusStats();
   return (

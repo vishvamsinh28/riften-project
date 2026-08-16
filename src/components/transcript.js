@@ -1,5 +1,11 @@
 import { ModelChip, FinishReason } from "./badges";
 
+/**
+ * Transcript renderer for the trace detail page: system prompt, user and
+ * assistant turns, tool calls/results (errors flagged), and the response.
+ * Content is rendered truthfully — code fences styled, no markdown engine.
+ */
+
 /** Split content on ``` fences so code renders as code without a markdown lib. */
 function RichText({ text, className = "" }) {
   if (typeof text !== "string" || !text) return null;
@@ -7,54 +13,64 @@ function RichText({ text, className = "" }) {
   // parts alternates: prose, lang, code, prose, lang, code...
   const out = [];
   for (let i = 0; i < parts.length; i += 1) {
-    if (i % 3 === 0) {
-      if (parts[i].trim()) {
-        out.push(
-          <p key={i} className={`whitespace-pre-wrap text-[13px] leading-6 ${className}`}>
-            {parts[i].replace(/\n{3,}/g, "\n\n").trim()}
-          </p>
-        );
-      }
-    } else if (i % 3 === 2) {
+    if (i % 3 === 1) continue; // language tag — consumed by the code segment
+    if (i % 3 === 2) {
       out.push(
         <pre key={i} className="codeblock my-2 text-ink-dim">
           {parts[i].replace(/\n$/, "")}
         </pre>
       );
+      continue;
     }
+    if (!parts[i].trim()) continue;
+    out.push(
+      <p key={i} className={`whitespace-pre-wrap text-[13px] leading-6 ${className}`}>
+        {parts[i].replace(/\n{3,}/g, "\n\n").trim()}
+      </p>
+    );
   }
   return <div className="space-y-2">{out}</div>;
 }
 
+/** Uppercase micro-label naming the speaker of a transcript block. */
 function RoleLabel({ children, tone = "text-ink-mute" }) {
   return <div className={`microlabel mb-1.5 ${tone}`}>{children}</div>;
 }
 
+/** Pretty-print when the payload is JSON; non-JSON renders as-is by design. */
 function prettyJson(str) {
+  if (typeof str !== "string") return String(str ?? "");
   try {
     return JSON.stringify(JSON.parse(str), null, 2);
   } catch {
-    return str;
+    return str; // plain-text tool output is legitimate — show it untouched
   }
 }
 
+/** Tool-call blocks. Ingested data may be malformed, so every field is optional. */
 function ToolCalls({ calls }) {
+  const list = Array.isArray(calls) ? calls : [];
+  if (list.length === 0) return null;
   return (
     <div className="space-y-2">
-      {calls.map((c) => (
-        <div key={c.id} className="overflow-hidden rounded-md border border-edge bg-bg">
+      {list.map((c, i) => (
+        <div key={c?.id ?? i} className="overflow-hidden rounded-md border border-edge bg-bg">
           <div className="flex items-center gap-2 border-b border-edge px-3 py-1.5">
             <span className="text-accent">→</span>
-            <span className="font-mono text-xs text-ink">{c.function.name}</span>
-            <span className="ml-auto font-mono text-2xs text-ink-mute">{c.id}</span>
+            <span className="font-mono text-xs text-ink">{c?.function?.name ?? "unknown tool"}</span>
+            <span className="ml-auto font-mono text-2xs text-ink-mute">{c?.id}</span>
           </div>
-          <pre className="overflow-x-auto px-3 py-2 font-mono text-xs leading-5 text-ink-dim">{prettyJson(c.function.arguments)}</pre>
+          <pre className="overflow-x-auto px-3 py-2 font-mono text-xs leading-5 text-ink-dim">{prettyJson(c?.function?.arguments)}</pre>
         </div>
       ))}
     </div>
   );
 }
 
+/**
+ * One tool-result block. Error payloads get red framing and an "error" tag;
+ * long outputs collapse behind a character count so transcripts stay scannable.
+ */
 function ToolResult({ message }) {
   const isError = typeof message.content === "string" && /^\s*\{\s*"error"/.test(message.content);
   const content = prettyJson(message.content);
@@ -88,6 +104,7 @@ function ToolResult({ message }) {
   );
 }
 
+/** Dispatch one historical message to its role-specific rendering. */
 function Message({ message }) {
   if (message.role === "user") {
     return (
@@ -116,6 +133,10 @@ function Message({ message }) {
   return null;
 }
 
+/**
+ * The full conversation view: collapsible system prompt, replayed history,
+ * and this trace's response emphasized with model + finish metadata.
+ */
 export function Transcript({ trace }) {
   const { request, response } = trace;
   return (

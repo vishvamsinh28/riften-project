@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { filterTraces, parseFilters, getStore } from "@/lib/store";
+import { getStore } from "@/lib/store";
+import { parseFilters, filterTraces } from "@/lib/filters";
 import { fmtUsd, fmtMs, fmtTokens, fmtTime, fmtCount, shortId } from "@/lib/format";
 import { FilterBar } from "@/components/filter-bar";
 import { ModelChip, StatusDot, FinishReason, SignalStrip } from "@/components/badges";
@@ -14,13 +15,19 @@ const PAGE_SIZE = 50;
 const GRID =
   "grid grid-cols-[92px_108px_120px_minmax(160px,1fr)_64px_84px_44px_64px_68px_76px_minmax(170px,1.1fr)] items-center gap-x-3";
 
-function SortHeader({ label, field, filters, align = "left" }) {
-  const active = filters.sort === field;
-  const nextDir = active && filters.dir === "desc" ? "asc" : "desc";
+/** Rebuild the current query string from raw params, minus empty values. */
+function paramsFrom(rawParams) {
   const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(filters.rawParams)) if (v) params.set(k, v);
+  for (const [k, v] of Object.entries(rawParams)) if (v) params.set(k, v);
+  return params;
+}
+
+/** Sortable column header; clicking toggles direction on the active field. */
+function SortHeader({ label, field, filters, rawParams, align = "left" }) {
+  const active = filters.sort === field;
+  const params = paramsFrom(rawParams);
   params.set("sort", field);
-  params.set("dir", nextDir);
+  params.set("dir", active && filters.dir === "desc" ? "asc" : "desc");
   params.delete("page");
   return (
     <Link
@@ -33,11 +40,11 @@ function SortHeader({ label, field, filters, align = "left" }) {
   );
 }
 
-function Pagination({ page, total, filters }) {
+/** Range summary + prev/next links preserving every other query param. */
+function Pagination({ page, total, rawParams }) {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const link = (p) => {
-    const params = new URLSearchParams();
-    for (const [k, v] of Object.entries(filters.rawParams)) if (v) params.set(k, v);
+    const params = paramsFrom(rawParams);
     if (p > 1) params.set("page", String(p));
     else params.delete("page");
     return `/traces${params.size ? `?${params}` : ""}`;
@@ -72,15 +79,19 @@ function Pagination({ page, total, filters }) {
   );
 }
 
+/**
+ * The trace explorer: URL-driven filters, sortable columns, paginated
+ * server-rendered rows. searchParams is a Promise in this Next version.
+ */
 export default async function TracesPage({ searchParams }) {
   const sp = await searchParams;
-  const flat = Object.fromEntries(
+  // Repeated query keys arrive as arrays; the last occurrence wins.
+  const rawParams = Object.fromEntries(
     Object.entries(sp).map(([k, v]) => [k, Array.isArray(v) ? v[v.length - 1] : v])
   );
-  const filters = parseFilters(flat);
-  filters.rawParams = flat;
+  const filters = parseFilters(rawParams);
   const results = filterTraces(filters);
-  const models = getStore().all.reduce((set, t) => set.add(t.model), new Set());
+  const models = [...new Set(getStore().all.map((t) => t.model))].sort();
   const page = Math.min(filters.page, Math.max(1, Math.ceil(results.length / PAGE_SIZE)));
   const rows = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -100,22 +111,22 @@ export default async function TracesPage({ searchParams }) {
       </div>
 
       <Suspense fallback={<div className="h-[30px]" />}>
-        <FilterBar models={[...models].sort()} />
+        <FilterBar models={models} />
       </Suspense>
 
       <div className="overflow-x-auto rounded-lg border border-edge bg-surface transition-opacity group-has-data-pending:opacity-50">
         <div className="min-w-[1220px]">
           <div className={`${GRID} border-b border-edge px-4 py-2`}>
-            <SortHeader label="time" field="ts" filters={filters} />
+            <SortHeader label="time" field="ts" filters={filters} rawParams={rawParams} />
             <span className="microlabel">trace</span>
             <span className="microlabel">session</span>
             <span className="microlabel">model</span>
             <span className="microlabel">status</span>
             <span className="microlabel">finish</span>
-            <SortHeader label="msgs" field="turns" filters={filters} align="right" />
-            <SortHeader label="tokens" field="tokens" filters={filters} align="right" />
-            <SortHeader label="latency" field="latency" filters={filters} align="right" />
-            <SortHeader label="cost" field="cost" filters={filters} align="right" />
+            <SortHeader label="msgs" field="turns" filters={filters} rawParams={rawParams} align="right" />
+            <SortHeader label="tokens" field="tokens" filters={filters} rawParams={rawParams} align="right" />
+            <SortHeader label="latency" field="latency" filters={filters} rawParams={rawParams} align="right" />
+            <SortHeader label="cost" field="cost" filters={filters} rawParams={rawParams} align="right" />
             <span className="microlabel">signals</span>
           </div>
 
@@ -147,7 +158,7 @@ export default async function TracesPage({ searchParams }) {
             ))
           )}
 
-          <Pagination page={page} total={results.length} filters={filters} />
+          <Pagination page={page} total={results.length} rawParams={rawParams} />
         </div>
       </div>
     </div>
