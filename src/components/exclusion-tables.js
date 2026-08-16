@@ -21,14 +21,14 @@ const REASON_FILTER_LINKS = {
 /* Kept + per-reason segment colors; statuses always ship with labels. */
 const REASON_COLORS = {
   kept: "var(--color-chart)",
-  superseded: "#5d6572",
+  superseded: "#b6bdc9",
   non_2xx: "var(--color-bad)",
   truncated: "var(--color-warn)",
-  retried_away: "#8a93a3",
-  continuation_rejected: "#c25a54",
-  weak_rating: "#c9a13c",
-  empty_response: "#5a616e",
-  content_filter: "#a06058",
+  retried_away: "#64748b",
+  continuation_rejected: "#e11d48",
+  weak_rating: "#ca8a04",
+  empty_response: "#94a3b8",
+  content_filter: "#7c3aed",
 };
 
 /** Collapsible chip list of excluded traces, capped for very long groups. */
@@ -45,7 +45,7 @@ function ExcludedList({ entries }) {
           <Link
             key={e.trace.id}
             href={`/traces/${e.trace.id}`}
-            className="rounded border border-edge bg-bg px-1.5 py-0.5 font-mono text-2xs text-accent transition-colors hover:border-edge-strong"
+            className="rounded border border-edge bg-surface px-1.5 py-0.5 font-mono text-2xs text-accent transition-colors duration-150 hover:border-edge-strong hover:bg-raised"
           >
             {shortId(e.trace.id)}
           </Link>
@@ -97,13 +97,13 @@ export function SftExclusionTable({ sft, total }) {
     .sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="mt-5 overflow-x-auto rounded-md border border-edge">
-      <div className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-center gap-x-4 border-b border-edge bg-raised px-4 py-2 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]">
-        <span className="microlabel">reason</span>
-        <span className="microlabel text-right">traces</span>
-        <span className="microlabel text-right">share</span>
-        <span className="microlabel">why it&apos;s out</span>
-        <span className="microlabel hidden md:block">excluded traces</span>
+    <div className="mt-5 overflow-x-auto">
+      <div className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-center gap-x-4 border-y border-edge px-0 py-2 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]">
+        <span className="text-2xs font-medium text-ink-mute">Reason</span>
+        <span className="text-2xs font-medium text-ink-mute text-right">Traces</span>
+        <span className="text-2xs font-medium text-ink-mute text-right">Share</span>
+        <span className="text-2xs font-medium text-ink-mute">Why it&apos;s out</span>
+        <span className="hidden text-2xs font-medium text-ink-mute md:block">Excluded traces</span>
       </div>
       {rows.map(([reason, count]) => {
         const meta = SFT_REASONS[reason] ?? { label: reason, detail: "" };
@@ -111,7 +111,7 @@ export function SftExclusionTable({ sft, total }) {
         return (
           <div
             key={reason}
-            className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-start gap-x-4 border-b border-edge/60 px-4 py-2.5 last:border-b-0 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]"
+            className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-start gap-x-4 border-b border-edge/60 px-0 py-2.5 last:border-b-0 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]"
           >
             <span className="flex items-center gap-2 text-[13px] text-ink">
               <span className="size-2 shrink-0 rounded-[3px]" style={{ background: REASON_COLORS[reason] ?? "#5a616e" }} />

@@ -24,9 +24,9 @@ const FEEDBACK_OPTIONS = [
 
 const STATUS_OPTIONS = ["2xx", "4xx", "5xx"];
 const STATUS_ACTIVE_STYLES = {
-  "2xx": "bg-good/15 text-good",
-  "4xx": "bg-warn/15 text-warn",
-  "5xx": "bg-bad/15 text-bad",
+  "2xx": "bg-good-tint text-good",
+  "4xx": "bg-warn-tint text-warn",
+  "5xx": "bg-bad-tint text-bad",
 };
 const RANGE_KEYS = ["cost_min", "cost_max", "lat_min", "lat_max"];
 const ALL_FILTER_KEYS = ["model", "status", "feedback", "truncated", "tool_errors", "q", ...RANGE_KEYS];
@@ -50,7 +50,7 @@ function FlagChip({ on, activeClass, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-md border px-2.5 py-1 text-[13px] transition-colors ${
+      className={`h-[30px] rounded-md border px-2.5 text-[13px] transition-colors duration-150 ${
         on ? activeClass : "border-edge bg-surface text-ink-dim hover:border-edge-strong hover:text-ink"
       }`}
     >
@@ -114,7 +114,7 @@ export function FilterBar({ models }) {
             name="q"
             defaultValue={current.q}
             placeholder="Search content, ids…"
-            className="h-[30px] w-56 rounded-md border border-edge bg-surface pl-8 pr-2 text-[13px] text-ink placeholder:text-ink-mute focus:border-accent/60 focus:outline-none"
+            className="h-[30px] w-56 rounded-md border border-edge bg-surface pl-8 pr-2 text-[13px] text-ink placeholder:text-ink-mute transition-colors duration-150 focus:border-accent/50 focus:outline-none"
           />
         </div>
       </form>
@@ -127,12 +127,12 @@ export function FilterBar({ models }) {
         ))}
       </Popover>
 
-      <div className="flex overflow-hidden rounded-md border border-edge">
+      <div className="flex h-[30px] overflow-hidden rounded-md border border-edge bg-surface">
         {STATUS_OPTIONS.map((s) => (
           <button
             key={s}
             onClick={() => toggleIn("status", current.status, s)}
-            className={`border-r border-edge px-2.5 py-1 font-mono text-xs transition-colors last:border-r-0 ${
+            className={`h-[30px] border-r border-edge px-2.5 font-mono text-xs transition-colors duration-150 last:border-r-0 ${
               current.status.includes(s) ? STATUS_ACTIVE_STYLES[s] : "bg-surface text-ink-mute hover:text-ink"
             }`}
           >
@@ -149,10 +149,10 @@ export function FilterBar({ models }) {
         ))}
       </Popover>
 
-      <FlagChip on={current.truncated} activeClass="border-warn/50 bg-warn/10 text-warn" onClick={() => setFlag("truncated", !current.truncated)}>
+      <FlagChip on={current.truncated} activeClass="border-warn/40 bg-warn-tint text-warn" onClick={() => setFlag("truncated", !current.truncated)}>
         Truncated
       </FlagChip>
-      <FlagChip on={current.toolErrors} activeClass="border-bad/50 bg-bad/10 text-bad" onClick={() => setFlag("tool_errors", !current.toolErrors)}>
+      <FlagChip on={current.toolErrors} activeClass="border-bad/40 bg-bad-tint text-bad" onClick={() => setFlag("tool_errors", !current.toolErrors)}>
         Tool errors
       </FlagChip>
 
@@ -173,7 +173,7 @@ export function FilterBar({ models }) {
         >
           <RangeInputs label="cost, usd" minName="cost_min" maxName="cost_max" minValue={current.ranges[0]} maxValue={current.ranges[1]} inputMode="decimal" />
           <RangeInputs label="latency, ms" minName="lat_min" maxName="lat_max" minValue={current.ranges[2]} maxValue={current.ranges[3]} inputMode="numeric" />
-          <button type="submit" className="w-full rounded border border-edge bg-raised py-1 text-xs text-ink hover:bg-overlay">
+          <button type="submit" className="w-full rounded-md border border-edge bg-surface py-1 text-xs text-ink transition-colors duration-150 hover:bg-raised">
             Apply
           </button>
         </form>
@@ -187,7 +187,7 @@ export function FilterBar({ models }) {
               for (const k of ALL_FILTER_KEYS) p.delete(k);
             });
           }}
-          className="px-1.5 py-1 text-[13px] text-ink-mute underline decoration-edge-strong underline-offset-4 transition-colors hover:text-ink"
+          className="px-1.5 py-1 text-[13px] text-ink-mute underline decoration-edge-strong underline-offset-4 transition-colors duration-150 hover:text-ink"
         >
           Clear
         </button>

@@ -1,23 +1,13 @@
 /**
  * Small display atoms shared across pages: model chips, status dots,
- * feedback signal badges. Server-safe (no state, no handlers).
+ * feedback signal pills. Neutral by default — color only carries meaning.
  */
 
-const MODEL_TINTS = {
-  anthropic: "border-[#c8794a]/35 text-[#e0a37e]",
-  openai: "border-[#5fb8a5]/35 text-[#8ed0c1]",
-  google: "border-[#7f9df0]/35 text-[#a7bcf5]",
-  deepseek: "border-[#a48fe0]/35 text-[#c0b0ec]",
-  meta: "border-[#6aa8d8]/35 text-[#93c4e8]",
-  unknown: "border-edge-strong text-ink-dim",
-};
-
-/** Bordered model-name chip, tinted per provider; unknown providers stay neutral. */
+/** Model name as a quiet mono chip; provider shows on hover via title. */
 export function ModelChip({ model, provider, className = "" }) {
-  const tint = MODEL_TINTS[provider] ?? MODEL_TINTS.unknown;
   return (
     <span
-      className={`inline-flex items-center rounded border bg-transparent px-1.5 py-px font-mono text-2xs ${tint} ${className}`}
+      className={`inline-flex max-w-full items-center truncate rounded bg-raised px-1.5 py-px font-mono text-2xs text-ink-dim ${className}`}
       title={provider}
     >
       {model}
@@ -31,38 +21,34 @@ export function StatusDot({ status }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className={`size-1.5 rounded-full ${cls}`} />
-      <span className="num text-xs">{status}</span>
+      <span className="num text-xs text-ink-dim">{status}</span>
     </span>
   );
 }
 
-const RATING_STYLES = {
-  strong: "border-good/40 text-good",
-  ok: "border-ink-mute/50 text-ink-dim",
-  weak: "border-warn/40 text-warn",
+/* Soft pill styles per signal kind: tinted fill + readable dark text. */
+const PILL_STYLES = {
+  strong: "bg-good-tint text-good",
+  ok: "bg-raised text-ink-dim",
+  weak: "bg-warn-tint text-warn",
+  accepted: "bg-good-tint text-good",
+  rejected: "bg-bad-tint text-bad",
+  retry: "bg-accent-soft text-accent",
+  retried: "bg-raised text-ink-mute",
+  truncated: "bg-warn-tint text-warn",
+  tool_error: "bg-bad-tint text-bad",
+  neutral: "bg-raised text-ink-dim",
 };
 
 /**
- * One quality-signal badge (rating, continuation, retry, truncation…).
+ * One quality-signal pill (rating, continuation, retry, truncation…).
  * Kind selects the tint; unknown kinds fall back to neutral styling.
  */
 export function Signal({ kind, children, title }) {
-  const styles = {
-    strong: RATING_STYLES.strong,
-    ok: RATING_STYLES.ok,
-    weak: RATING_STYLES.weak,
-    accepted: "border-good/40 text-good",
-    rejected: "border-bad/40 text-bad",
-    retry: "border-accent/40 text-accent",
-    retried: "border-ink-mute/50 text-ink-dim",
-    truncated: "border-warn/40 text-warn",
-    tool_error: "border-bad/40 text-bad",
-    neutral: "border-edge-strong text-ink-dim",
-  };
   return (
     <span
       title={title}
-      className={`inline-flex items-center gap-1 rounded border px-1.5 py-px font-mono text-2xs ${styles[kind] ?? styles.neutral}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-px font-medium text-2xs ${PILL_STYLES[kind] ?? PILL_STYLES.neutral}`}
     >
       {children}
     </span>

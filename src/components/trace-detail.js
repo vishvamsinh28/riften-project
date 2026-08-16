@@ -31,14 +31,14 @@ function railStatus(t) {
 export function SessionRail({ trace }) {
   const session = getSession(trace.session_id) ?? [];
   return (
-    <div className="rounded-lg border border-edge bg-surface">
-      <div className="flex items-baseline justify-between border-b border-edge px-4 py-2.5">
-        <span className="text-[13px] font-medium text-ink">Session</span>
+    <section>
+      <div className="mb-1.5 flex items-baseline justify-between">
+        <h2 className="text-[13px] font-semibold text-ink">Session</h2>
         <Link href={`/traces?session=${trace.session_id}`} className="font-mono text-2xs text-accent hover:underline">
           {trace.session_id}
         </Link>
       </div>
-      <div className="max-h-105 overflow-y-auto py-1.5">
+      <div className="-mx-2 max-h-105 overflow-y-auto">
         {session.map((t) => {
           const current = t.id === trace.id;
           const dot = t.status !== 200 ? "bg-bad" : t.derived?.truncated ? "bg-warn" : "bg-good";
@@ -46,7 +46,7 @@ export function SessionRail({ trace }) {
             <Link
               key={t.id}
               href={`/traces/${t.id}`}
-              className={`flex items-center gap-2.5 px-4 py-1.5 text-xs transition-colors ${current ? "bg-overlay" : "hover:bg-raised"}`}
+              className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs transition-colors duration-100 ${current ? "bg-accent-soft" : "hover:bg-raised"}`}
             >
               <span className="num w-5 shrink-0 text-right text-ink-mute">{t.turn}</span>
               <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
@@ -56,7 +56,7 @@ export function SessionRail({ trace }) {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -75,7 +75,7 @@ export function RetryChain({ trace }) {
   if (!original && retries.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-edge bg-surface px-4 py-2.5 text-[13px]">
+    <div className="flex flex-wrap items-center gap-2 text-[13px]">
       <span className="microlabel">retry chain</span>
       {original ? (
         <>
@@ -117,9 +117,9 @@ export function ExportStanding({ trace }) {
   const reason = exclusion ? SFT_REASONS[exclusion.reason] : null;
 
   return (
-    <div className="rounded-lg border border-edge bg-surface">
-      <div className="border-b border-edge px-4 py-2.5 text-[13px] font-medium text-ink">Export standing</div>
-      <div className="space-y-2.5 px-4 py-3 text-[13px]">
+    <section>
+      <h2 className="mb-2 text-[13px] font-semibold text-ink">Export standing</h2>
+      <div className="space-y-2.5 text-[13px]">
         {included ? (
           <p className="text-good">● In the SFT export — this is the session&apos;s longest clean transcript.</p>
         ) : (
@@ -146,6 +146,6 @@ export function ExportStanding({ trace }) {
           Exports &amp; exclusions →
         </Link>
       </div>
-    </div>
+    </section>
   );
 }

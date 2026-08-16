@@ -2,18 +2,17 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getStore } from "@/lib/store";
 import { parseFilters, filterTraces } from "@/lib/filters";
-import { fmtUsd, fmtMs, fmtTokens, fmtTime, fmtCount, shortId } from "@/lib/format";
+import { fmtCount } from "@/lib/format";
 import { FilterBar } from "@/components/filter-bar";
-import { ModelChip, StatusDot, FinishReason, SignalStrip } from "@/components/badges";
+import { TraceRows } from "@/components/trace-rows";
+import { TRACE_GRID } from "@/components/trace-grid";
+import { PageHeader, PageBody } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Traces" };
 
 const PAGE_SIZE = 50;
-
-const GRID =
-  "grid grid-cols-[92px_108px_120px_minmax(160px,1fr)_64px_84px_44px_64px_68px_76px_minmax(170px,1.1fr)] items-center gap-x-3";
 
 /** Rebuild the current query string from raw params, minus empty values. */
 function paramsFrom(rawParams) {
@@ -32,7 +31,7 @@ function SortHeader({ label, field, filters, rawParams, align = "left" }) {
   return (
     <Link
       href={`/traces?${params}`}
-      className={`microlabel flex items-center gap-1 transition-colors hover:text-ink ${align === "right" ? "justify-end" : ""} ${active ? "text-ink-dim" : ""}`}
+      className={`flex items-center gap-1 text-2xs font-medium text-ink-mute transition-colors duration-150 hover:text-ink ${align === "right" ? "justify-end" : ""} ${active ? "text-ink-dim" : ""}`}
     >
       {label}
       {active ? <span className="text-accent">{filters.dir === "desc" ? "↓" : "↑"}</span> : null}
@@ -51,27 +50,23 @@ function Pagination({ page, total, rawParams }) {
   };
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, page * PAGE_SIZE);
+  const btn = (enabled) =>
+    `rounded-md border border-edge px-2 py-1 text-xs transition-colors duration-150 ${
+      enabled ? "text-ink-dim hover:bg-raised hover:text-ink" : "pointer-events-none text-ink-mute/60"
+    }`;
   return (
-    <div className="flex items-center justify-between border-t border-edge px-4 py-2.5">
+    <div className="flex items-center justify-between border-t border-edge px-6 py-2">
       <span className="text-xs text-ink-mute">
         {fmtCount(from)}–{fmtCount(to)} of {fmtCount(total)}
       </span>
       <div className="flex items-center gap-1">
-        <Link
-          href={page > 1 ? link(page - 1) : "#"}
-          aria-disabled={page <= 1}
-          className={`rounded border border-edge px-2 py-1 text-xs ${page > 1 ? "text-ink-dim hover:bg-raised hover:text-ink" : "pointer-events-none text-ink-mute/70"}`}
-        >
+        <Link href={page > 1 ? link(page - 1) : "#"} aria-disabled={page <= 1} className={btn(page > 1)}>
           ← Prev
         </Link>
         <span className="num px-2 text-xs text-ink-mute">
           {page} / {pages}
         </span>
-        <Link
-          href={page < pages ? link(page + 1) : "#"}
-          aria-disabled={page >= pages}
-          className={`rounded border border-edge px-2 py-1 text-xs ${page < pages ? "text-ink-dim hover:bg-raised hover:text-ink" : "pointer-events-none text-ink-mute/70"}`}
-        >
+        <Link href={page < pages ? link(page + 1) : "#"} aria-disabled={page >= pages} className={btn(page < pages)}>
           Next →
         </Link>
       </div>
@@ -79,9 +74,27 @@ function Pagination({ page, total, rawParams }) {
   );
 }
 
+/** Strip transcript bodies so the client table gets slim, fast row payloads. */
+function toRow(t) {
+  return {
+    id: t.id,
+    session_id: t.session_id,
+    turn: t.turn,
+    ts: t.ts,
+    model: t.model,
+    provider: t.provider,
+    status: t.status,
+    latency_ms: t.latency_ms,
+    cost_usd: t.cost_usd,
+    tokens: t.usage?.total_tokens ?? null,
+    feedback: t.feedback,
+    derived: t.derived,
+  };
+}
+
 /**
- * The trace explorer: URL-driven filters, sortable columns, paginated
- * server-rendered rows. searchParams is a Promise in this Next version.
+ * The trace explorer: URL-driven filters, sortable columns, paginated rows
+ * that open a peek drawer. searchParams is a Promise in this Next version.
  */
 export default async function TracesPage({ searchParams }) {
   const sp = await searchParams;
@@ -93,74 +106,52 @@ export default async function TracesPage({ searchParams }) {
   const results = filterTraces(filters);
   const models = [...new Set(getStore().all.map((t) => t.model))].sort();
   const page = Math.min(filters.page, Math.max(1, Math.ceil(results.length / PAGE_SIZE)));
-  const rows = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rows = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(toRow);
 
   return (
-    <div className="group space-y-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">Traces</h1>
-        <span className="text-[13px] text-ink-mute">
-          <span className="num text-ink-dim">{fmtCount(results.length)}</span> matching
-          {filters.session ? (
+    <>
+      <PageHeader
+        title="Traces"
+        sub={
+          filters.session ? (
             <>
-              {" "}
-              in session <span className="font-mono text-accent">{filters.session}</span>
+              session <span className="font-mono text-accent">{filters.session}</span>
             </>
-          ) : null}
-        </span>
-      </div>
-
-      <Suspense fallback={<div className="h-[30px]" />}>
-        <FilterBar models={models} />
-      </Suspense>
-
-      <div className="overflow-x-auto rounded-lg border border-edge bg-surface transition-opacity group-has-data-pending:opacity-50">
-        <div className="min-w-[1220px]">
-          <div className={`${GRID} border-b border-edge px-4 py-2`}>
-            <SortHeader label="time" field="ts" filters={filters} rawParams={rawParams} />
-            <span className="microlabel">trace</span>
-            <span className="microlabel">session</span>
-            <span className="microlabel">model</span>
-            <span className="microlabel">status</span>
-            <span className="microlabel">finish</span>
-            <SortHeader label="msgs" field="turns" filters={filters} rawParams={rawParams} align="right" />
-            <SortHeader label="tokens" field="tokens" filters={filters} rawParams={rawParams} align="right" />
-            <SortHeader label="latency" field="latency" filters={filters} rawParams={rawParams} align="right" />
-            <SortHeader label="cost" field="cost" filters={filters} rawParams={rawParams} align="right" />
-            <span className="microlabel">signals</span>
-          </div>
-
-          {rows.length === 0 ? (
-            <div className="px-4 py-16 text-center">
-              <p className="text-[13px] text-ink-dim">No traces match these filters.</p>
-              <p className="mt-1 text-xs text-ink-mute">Loosen a filter, or clear them all.</p>
-            </div>
           ) : (
-            rows.map((t) => (
-              <Link key={t.id} href={`/traces/${t.id}`} className={`${GRID} border-b border-edge/60 px-4 py-2 transition-colors last:border-b-0 hover:bg-raised`}>
-                <span className="num text-xs whitespace-nowrap text-ink-mute">{fmtTime(t.ts)}</span>
-                <span className="truncate font-mono text-xs text-accent">{shortId(t.id)}</span>
-                <span className="truncate font-mono text-xs text-ink-mute">
-                  {shortId(t.session_id)}
-                  <span className="ml-1">·{t.turn}</span>
-                </span>
-                <span className="truncate">
-                  <ModelChip model={t.model} provider={t.provider} />
-                </span>
-                <StatusDot status={t.status} />
-                <FinishReason reason={t.derived.finish} />
-                <span className="num text-right text-xs text-ink-dim">{t.derived.convLength}</span>
-                <span className="num text-right text-xs text-ink-dim">{fmtTokens(t.usage?.total_tokens)}</span>
-                <span className="num text-right text-xs text-ink-dim">{fmtMs(t.latency_ms)}</span>
-                <span className="num text-right text-xs text-ink-dim">{fmtUsd(t.cost_usd)}</span>
-                <SignalStrip trace={t} />
-              </Link>
-            ))
-          )}
+            "every router request, with quality signals"
+          )
+        }
+        actions={
+          <span className="text-xs text-ink-mute">
+            <span className="num text-ink-dim">{fmtCount(results.length)}</span> matching
+          </span>
+        }
+      />
+      <PageBody className="group space-y-3">
+        <Suspense fallback={<div className="h-[30px]" />}>
+          <FilterBar models={models} />
+        </Suspense>
 
-          <Pagination page={page} total={results.length} rawParams={rawParams} />
+        <div className="-mx-6 overflow-x-auto transition-opacity duration-200 group-has-data-pending:opacity-50">
+          <div className="min-w-[1220px]">
+            <div className={`${TRACE_GRID} border-b border-edge px-6 py-2`}>
+              <SortHeader label="Time" field="ts" filters={filters} rawParams={rawParams} />
+              <span className="text-2xs font-medium text-ink-mute">Trace</span>
+              <span className="text-2xs font-medium text-ink-mute">Session</span>
+              <span className="text-2xs font-medium text-ink-mute">Model</span>
+              <span className="text-2xs font-medium text-ink-mute">Status</span>
+              <span className="text-2xs font-medium text-ink-mute">Finish</span>
+              <SortHeader label="Msgs" field="turns" filters={filters} rawParams={rawParams} align="right" />
+              <SortHeader label="Tokens" field="tokens" filters={filters} rawParams={rawParams} align="right" />
+              <SortHeader label="Latency" field="latency" filters={filters} rawParams={rawParams} align="right" />
+              <SortHeader label="Cost" field="cost" filters={filters} rawParams={rawParams} align="right" />
+              <span className="text-2xs font-medium text-ink-mute">Signals</span>
+            </div>
+            <TraceRows rows={rows} />
+            <Pagination page={page} total={results.length} rawParams={rawParams} />
+          </div>
         </div>
-      </div>
-    </div>
+      </PageBody>
+    </>
   );
 }

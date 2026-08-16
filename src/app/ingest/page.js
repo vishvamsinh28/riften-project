@@ -1,6 +1,8 @@
 import { corpusStats } from "@/lib/stats";
 import { fmtCount } from "@/lib/format";
 import { IngestForm } from "@/components/ingest-form";
+import { Panel } from "@/components/overview-cards";
+import { PageHeader, PageBody } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -34,48 +36,43 @@ const FIELDS = [
 export default function IngestPage() {
   const stats = corpusStats();
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight">Ingest</h1>
-        <p className="mt-0.5 text-[13px] text-ink-mute">
-          The store currently holds <span className="num text-ink-dim">{fmtCount(stats.traces)}</span> traces across{" "}
-          <span className="num text-ink-dim">{stats.sessions}</span> sessions. Rows are validated on the way in —
-          malformed rows are rejected with a reason, never silently dropped.
-        </p>
-      </div>
+    <>
+      <PageHeader
+        title="Ingest"
+        sub={`store holds ${fmtCount(stats.traces)} traces across ${stats.sessions} sessions · every row validated on the way in`}
+      />
+      <PageBody>
+        <div className="grid gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            <h2 className="mb-2 text-[13px] font-semibold text-ink">Paste traces</h2>
+            <IngestForm />
+          </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <h2 className="mb-2 text-[13px] font-medium text-ink">Paste traces</h2>
-          <IngestForm />
-        </div>
-
-        <div className="space-y-4 lg:col-span-2">
-          <section className="rounded-lg border border-edge bg-surface">
-            <h2 className="border-b border-edge px-4 py-2.5 text-[13px] font-medium text-ink">Or POST directly</h2>
-            <div className="px-4 py-3">
+          <div className="space-y-5 lg:col-span-2">
+            <Panel title="Or POST directly">
               <pre className="codeblock text-2xs leading-4">{CURL}</pre>
               <p className="mt-2 text-xs leading-5 text-ink-mute">
                 Accepts NDJSON (one trace per line) or a JSON array. The response reports every accepted and rejected
                 row with the validation error.
               </p>
-            </div>
-          </section>
+            </Panel>
 
-          <section className="rounded-lg border border-edge bg-surface">
-            <h2 className="border-b border-edge px-4 py-2.5 text-[13px] font-medium text-ink">Trace shape</h2>
-            <div className="px-4 py-2">
-              {FIELDS.map(([field, desc, required]) => (
-                <div key={field} className="flex items-baseline gap-3 border-b border-edge/60 py-1.5 last:border-b-0">
-                  <code className="w-40 shrink-0 font-mono text-2xs text-accent">{field}</code>
-                  <span className="flex-1 text-xs text-ink-mute">{desc}</span>
-                  {required ? <span className="microlabel shrink-0 text-warn/80">req</span> : null}
-                </div>
-              ))}
-            </div>
-          </section>
+            <Panel title="Trace shape" flush>
+              <div>
+                {FIELDS.map(([field, desc, required]) => (
+                  <div key={field} className="flex items-baseline gap-3 border-b border-edge/60 py-[5px] last:border-b-0">
+                    <code className="w-40 shrink-0 font-mono text-2xs text-accent">{field}</code>
+                    <span className="flex-1 text-xs text-ink-mute">{desc}</span>
+                    {required ? (
+                      <span className="shrink-0 rounded-full bg-warn-tint px-1.5 text-2xs font-medium text-warn">req</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
         </div>
-      </div>
-    </div>
+      </PageBody>
+    </>
   );
 }

@@ -54,7 +54,7 @@ function ToolCalls({ calls }) {
   return (
     <div className="space-y-2">
       {list.map((c, i) => (
-        <div key={c?.id ?? i} className="overflow-hidden rounded-md border border-edge bg-bg">
+        <div key={c?.id ?? i} className="overflow-hidden rounded-md border border-edge bg-surface">
           <div className="flex items-center gap-2 border-b border-edge px-3 py-1.5">
             <span className="text-accent">→</span>
             <span className="font-mono text-xs text-ink">{c?.function?.name ?? "unknown tool"}</span>
@@ -81,12 +81,12 @@ function ToolResult({ message }) {
     </pre>
   );
   return (
-    <div className={`overflow-hidden rounded-md border bg-bg ${isError ? "border-bad/40" : "border-edge"}`}>
+    <div className={`overflow-hidden rounded-md border bg-surface ${isError ? "border-bad/40" : "border-edge"}`}>
       <div className={`flex items-center gap-2 border-b px-3 py-1.5 ${isError ? "border-bad/30" : "border-edge"}`}>
         <span className={isError ? "text-bad" : "text-ink-mute"}>←</span>
         <span className="font-mono text-xs text-ink">{message.name ?? "tool result"}</span>
         {isError ? (
-          <span className="rounded border border-bad/40 px-1.5 font-mono text-2xs text-bad">error</span>
+          <span className="rounded-full bg-bad-tint px-2 font-medium text-2xs text-bad">error</span>
         ) : null}
         <span className="ml-auto font-mono text-2xs text-ink-mute">{message.tool_call_id}</span>
       </div>
@@ -108,7 +108,7 @@ function ToolResult({ message }) {
 function Message({ message }) {
   if (message.role === "user") {
     return (
-      <div className="rounded-lg border border-edge bg-raised px-4 py-3">
+      <div className="rounded-lg border border-edge bg-surface px-4 py-3">
         <RoleLabel>user</RoleLabel>
         <RichText text={message.content} className="text-ink" />
       </div>
@@ -158,13 +158,13 @@ export function Transcript({ trace }) {
       ))}
 
       {response?.message ? (
-        <div className="rounded-lg border border-accent/25 bg-surface px-4 py-3">
+        <div className="rounded-lg border border-accent/25 bg-accent-soft/50 px-4 py-3">
           <div className="mb-1.5 flex items-center gap-2.5">
             <span className="microlabel text-accent/80">response</span>
             <ModelChip model={trace.model} provider={trace.provider} />
             <FinishReason reason={response.finish_reason} />
             {trace.derived.truncated ? (
-              <span className="rounded border border-warn/40 px-1.5 font-mono text-2xs text-warn">truncated</span>
+              <span className="rounded-full bg-warn-tint px-2 font-medium text-2xs text-warn">truncated</span>
             ) : null}
           </div>
           {response.message.content ? <RichText text={response.message.content} className="text-ink" /> : null}

@@ -2,46 +2,65 @@ import Link from "next/link";
 import { fmtPct } from "@/lib/format";
 
 /**
- * Presentational atoms for the overview page: stat tiles, titled cards,
- * quality-signal rows, and the latency bucketing helper. Server-safe.
+ * Dashboard building blocks: unboxed KPI row, hairline-separated sections,
+ * and quality-signal rows, plus the chart bucketing helpers. Everything
+ * sits directly on the app surface — no card chrome.
  */
 
-/** One headline stat; wraps in a link when a drill-down target exists. */
-export function Tile({ label, value, sub, href }) {
+/** One KPI: label over a large numeral; links get a hover wash. */
+export function Kpi({ label, value, sub, href }) {
   const body = (
     <>
-      <div className="microlabel">{label}</div>
-      <div className="num mt-1.5 text-[22px] leading-7 text-ink">{value}</div>
-      {sub ? <div className="mt-0.5 text-xs text-ink-mute">{sub}</div> : null}
+      <div className="text-2xs font-medium text-ink-mute">{label}</div>
+      <div className="num mt-1 text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink">{value}</div>
+      {sub ? <div className="mt-0.5 text-2xs text-ink-mute">{sub}</div> : null}
     </>
   );
-  const cls = "rounded-lg border border-edge bg-surface px-4 py-3";
+  const cls = "block min-w-0 rounded-md px-4 py-1 transition-colors duration-150 first:pl-0";
   if (!href) return <div className={cls}>{body}</div>;
   return (
-    <Link href={href} className={`${cls} transition-colors hover:border-edge-strong hover:bg-raised`}>
+    <Link href={href} className={`${cls} hover:bg-raised/60`}>
       {body}
     </Link>
   );
 }
 
-/** Titled card shell with an optional right-aligned aside note. */
-export function Card({ title, aside, children, className = "" }) {
+/** The KPI row: no box — cells separated by hairline dividers only. */
+export function KpiStrip({ children }) {
   return (
-    <section className={`rounded-lg border border-edge bg-surface ${className}`}>
-      <header className="flex items-baseline justify-between border-b border-edge px-4 py-2.5">
-        <h2 className="text-[13px] font-medium text-ink">{title}</h2>
-        {aside ? <span className="text-xs text-ink-mute">{aside}</span> : null}
+    <div className="grid grid-cols-2 gap-y-4 md:flex md:items-start md:divide-x md:divide-edge md:[&>*]:pr-6 md:[&>*+*]:pl-6">
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A titled section on the open surface: small heading row, content below,
+ * no border box. Pages separate sections with space + hairlines.
+ */
+export function Panel({ title, aside, children, className = "", flush = false }) {
+  return (
+    <section className={className}>
+      <header className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-[13px] font-semibold tracking-[-0.006em] text-ink">{title}</h2>
+        {aside ? <span className="text-2xs text-ink-mute">{aside}</span> : null}
       </header>
-      <div className="px-4 py-3">{children}</div>
+      <div>{children}</div>
     </section>
   );
 }
 
 /** One quality-signal row: label, count, share — links into filtered traces. */
-export function SignalRow({ label, count, total, href, tone = "text-ink-dim" }) {
+export function SignalRow({ label, count, total, href, dot = "bg-edge-strong" }) {
   return (
-    <Link href={href} className="-mx-2 flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-raised">
-      <span className={`text-[13px] ${tone}`}>{label}</span>
+    <Link
+      href={href}
+      className="-mx-2 flex items-center justify-between rounded-md px-2 py-[5px] transition-colors duration-150 hover:bg-raised"
+    >
+      <span className="flex items-center gap-2 text-[13px] text-ink-dim">
+        <span className={`size-1.5 rounded-full ${dot}`} />
+        {label}
+      </span>
       <span className="num text-xs text-ink-dim">
         {count}
         <span className="text-ink-mute"> · {fmtPct(count, total)}</span>
@@ -55,7 +74,7 @@ const LATENCY_EDGES = [0, 500, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000, 
 
 /**
  * Bucket successful-request latencies into the fixed edge set for the
- * overview histogram. Returns [{label, count}].
+ * dashboard histogram. Returns [{label, count}].
  */
 export function latencyBuckets(traces) {
   const values = (traces ?? []).filter((t) => t.status === 200).map((t) => t.latency_ms);
@@ -67,4 +86,30 @@ export function latencyBuckets(traces) {
       count: values.filter((v) => v >= lo && v < hi).length,
     };
   });
+}
+
+/**
+ * Aggregate traces into per-day success/error counts spanning the corpus
+ * range, including zero-traffic days so the time axis stays honest.
+ */
+export function dailyBuckets(traces) {
+  const list = traces ?? [];
+  if (list.length === 0) return [];
+  const byDay = new Map();
+  for (const t of list) {
+    const day = t.ts?.slice(0, 10);
+    if (!day) continue;
+    const entry = byDay.get(day) ?? { ok: 0, err: 0 };
+    if (t.status === 200) entry.ok += 1;
+    else entry.err += 1;
+    byDay.set(day, entry);
+  }
+  const days = [...byDay.keys()].sort();
+  const out = [];
+  // Walk the full calendar range so gaps render as empty days, not skipped.
+  for (let d = new Date(days[0]); d <= new Date(days[days.length - 1]); d.setUTCDate(d.getUTCDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    out.push({ day: key, ...(byDay.get(key) ?? { ok: 0, err: 0 }) });
+  }
+  return out;
 }

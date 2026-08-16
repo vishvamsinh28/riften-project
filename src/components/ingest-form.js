@@ -100,19 +100,19 @@ export function IngestForm() {
         onChange={(e) => setText(e.target.value)}
         spellCheck={false}
         placeholder={'{"id":"tr_...","session_id":"ses_...","ts":"2026-08-15T10:32:00Z","model":"gpt-5", ...}\none JSON object per line, or a JSON array'}
-        className="h-64 w-full resize-y rounded-lg border border-edge bg-surface p-3 font-mono text-xs leading-5 text-ink placeholder:text-ink-mute focus:border-accent/60 focus:outline-none"
+        className="h-64 w-full resize-y rounded-lg border border-edge bg-surface p-3 font-mono text-xs leading-5 text-ink placeholder:text-ink-mute transition-colors duration-150 focus:border-accent/50 focus:outline-none"
       />
       <div className="flex items-center gap-2">
         <button
           onClick={submit}
           disabled={isPending}
-          className="rounded-md bg-accent/15 px-4 py-1.5 text-[13px] font-medium text-accent ring-1 ring-accent/40 transition-colors hover:bg-accent/25 disabled:opacity-50"
+          className="rounded-md bg-accent-strong px-4 py-1.5 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#3d7af0] disabled:opacity-50"
         >
           {isPending ? "Ingesting…" : "Ingest"}
         </button>
         <button
           onClick={() => setText(SAMPLE.map((r) => JSON.stringify(r)).join("\n"))}
-          className="rounded-md border border-edge bg-surface px-3 py-1.5 text-[13px] text-ink-dim transition-colors hover:border-edge-strong hover:text-ink"
+          className="rounded-md border border-edge bg-surface px-3 py-1.5 text-[13px] text-ink-dim transition-colors duration-150 hover:border-edge-strong hover:text-ink"
         >
           Load sample (1 valid, 1 broken)
         </button>
@@ -124,11 +124,11 @@ export function IngestForm() {
       </div>
 
       {error ? (
-        <div className="rounded-md border border-bad/40 bg-bad/5 px-3 py-2 text-[13px] text-bad">{error}</div>
+        <div className="rounded-md border border-bad/30 bg-bad-tint px-3 py-2 text-[13px] text-bad">{error}</div>
       ) : null}
 
       {result ? (
-        <div className="rounded-lg border border-edge bg-surface">
+        <div className="overflow-hidden rounded-lg border border-edge bg-surface">
           <div className="flex items-center gap-4 border-b border-edge px-4 py-2.5 text-[13px]">
             <span className="text-good">
               ● <span className="num">{result.accepted}</span> accepted
