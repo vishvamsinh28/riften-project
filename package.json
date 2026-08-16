@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "seed": "node scripts/generate-corpus.mjs",
+    "validate": "node scripts/validate-exports.mjs"
   },
   "dependencies": {
     "next": "16.3.1",

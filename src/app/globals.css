@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #0b0c0e;
+  --color-surface: #121317;
+  --color-raised: #17191e;
+  --color-overlay: #1d2026;
+  --color-edge: #22252b;
+  --color-edge-strong: #303540;
+  --color-ink: #e6e8ec;
+  --color-ink-dim: #9ba1ab;
+  --color-ink-mute: #7f8894;
+  --color-accent: #7fb0f0;
+  --color-chart: #4c8de8;
+  --color-good: #45b26b;
+  --color-warn: #e2b93b;
+  --color-bad: #e5544b;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-chart) 35%, transparent);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-feature-settings: "ss01";
+}
+
+/* Custom classes live in the components layer so Tailwind utilities
+   (layered after components) can still override them per call site. */
+@layer components {
+  /* Micro label: the app's recurring 11px uppercase tag */
+  .microlabel {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-mute);
+    font-weight: 500;
+  }
+
+  /* numeric columns */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* hide scrollbars on chip rows without killing scroll */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-edge-strong) transparent;
+  }
+
+  /* transcript code blocks */
+  .codeblock {
+    background: var(--color-bg);
+    border: 1px solid var(--color-edge);
+    border-radius: 6px;
+    padding: 0.625rem 0.75rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    white-space: pre;
+  }
+
+  /* checkbox with a drawn tick — arbitrary-value classes can't carry this URL */
+  .checktick {
+    appearance: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 4px;
+    border: 1px solid var(--color-edge-strong);
+    background: var(--color-surface) center / 10px no-repeat;
+    flex-shrink: 0;
+  }
+  .checktick:checked {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.2 4.2 7.4 8 3' fill='none' stroke='%230b0c0e' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+}
