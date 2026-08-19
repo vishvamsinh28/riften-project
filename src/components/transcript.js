@@ -4,11 +4,23 @@ import { RichText, ToolUnit, OrphanResult } from "./transcript-blocks";
 import { ExpandAll } from "./expand-all";
 
 /**
- * Transcript renderer shaped like the export logic itself: agent clients
- * replay the whole conversation every turn, so earlier exchanges are the
- * replayed prefix — collapsed to one-line rows — and the final exchange
- * plus this trace's response render expanded as the page's focus.
+ * Transcript renderer shaped like the export logic: earlier exchanges are
+ * the replayed prefix (collapsed rows), the final exchange and response
+ * are the payoff. One hairline thread runs down the left connecting every
+ * turn — role nodes sit on it, and it thickens into the response's bar.
  */
+
+const NODE = {
+  system: "size-[7px] bg-edge-strong",
+  user: "size-[7px] bg-ink",
+  assistant: "size-[7px] border border-ink-dim bg-bg",
+  tool: "size-[5px] bg-ink-mute",
+};
+
+/** Role node pinned onto the thread; offsets are relative to the pl-6 gutter. */
+function Node({ kind, className = "" }) {
+  return <span aria-hidden="true" className={`absolute ${NODE[kind] ?? NODE.tool} ${className}`} />;
+}
 
 /** Group messages into exchanges: each user message opens a new one. */
 function toExchanges(messages) {
@@ -39,22 +51,25 @@ function indexResults(messages) {
   return { byId, consumed };
 }
 
-/** Render one exchange's messages in full (used expanded and inside rows). */
-function ExchangeBody({ group, byId, consumed }) {
+/** One exchange's messages in full. `threaded` pins role nodes to the thread. */
+function ExchangeBody({ group, byId, consumed, threaded = false }) {
+  const node = (kind) => (threaded ? <Node kind={kind} className="-left-[24px] top-[3px]" /> : null);
   return (
     <div className="space-y-3">
       {group.map((m, i) => {
         if (m?.role === "user") {
           return (
-            <div key={i}>
-              <div className="microlabel mb-1.5">user</div>
+            <div key={i} className="relative">
+              {node("user")}
+              <div className="microlabel mb-1.5 text-ink-dim">user</div>
               <RichText text={m.content} className="text-ink-dim" />
             </div>
           );
         }
         if (m?.role === "assistant") {
           return (
-            <div key={i}>
+            <div key={i} className="relative">
+              {node("assistant")}
               <div className="microlabel mb-1.5 text-ink-dim">assistant</div>
               {m.content ? <RichText text={m.content} className="text-ink" /> : null}
               {(m.tool_calls ?? []).length > 0 ? (
@@ -67,7 +82,14 @@ function ExchangeBody({ group, byId, consumed }) {
             </div>
           );
         }
-        if (m?.role === "tool" && !consumed.has(m)) return <OrphanResult key={i} message={m} />;
+        if (m?.role === "tool" && !consumed.has(m)) {
+          return (
+            <div key={i} className="relative">
+              {threaded ? <Node kind="tool" className="-left-[23px] top-[4px]" /> : null}
+              <OrphanResult message={m} />
+            </div>
+          );
+        }
         return null; // consumed results render inside their assistant's unit
       })}
     </div>
@@ -83,7 +105,7 @@ function exchangeSummary(group) {
   return { preview, tools, hasError };
 }
 
-/** The full conversation: collapsed replayed prefix, expanded final exchange + response. */
+/** The full conversation: one thread from system prompt to response. */
 export function Transcript({ trace }) {
   const { request, response } = trace;
   const messages = Array.isArray(request.messages) ? request.messages : [];
@@ -93,75 +115,86 @@ export function Transcript({ trace }) {
   const current = exchanges[exchanges.length - 1] ?? [];
 
   return (
-    <div className="space-y-5">
-      {request.system ? (
-        <div className="relative">
-          {/* button lives outside <summary> so copying never toggles the disclosure */}
-          <details>
-            <summary className="cursor-pointer select-none pr-8 text-[13px] text-ink-mute transition-colors hover:text-ink">
-              <span className="microlabel mr-2">system</span>
-              {request.system.slice(0, 88)}
-              {request.system.length > 88 ? "…" : ""}
-            </summary>
-            <div className="pt-2">
-              <RichText text={request.system} className="text-ink-dim" />
+    <div>
+      <div className="relative pb-5 pl-6">
+        {/* the thread — one continuous hairline the role nodes sit on; it
+            runs to the wrapper's bottom, where the response bar takes over.
+            Absolute, so the spacing flow lives on the inner div. */}
+        <span aria-hidden="true" className="absolute bottom-0 left-[3px] top-1 w-px bg-edge-strong" />
+        <div className="space-y-5">
+
+        {request.system ? (
+          <div className="relative">
+            <Node kind="system" className="-left-[24px] top-[4px]" />
+            {/* button lives outside <summary> so copying never toggles the disclosure */}
+            <details>
+              <summary className="cursor-pointer select-none pr-8 text-[13px] text-ink-mute transition-colors hover:text-ink">
+                <span className="microlabel mr-2">system</span>
+                {request.system.slice(0, 88)}
+                {request.system.length > 88 ? "…" : ""}
+              </summary>
+              <div className="pt-2">
+                <RichText text={request.system} className="text-ink-dim" />
+              </div>
+            </details>
+            <CopyButton text={request.system} className="absolute right-0 top-0.5" />
+          </div>
+        ) : null}
+
+        {context.length > 0 ? (
+          <section id="replayed-context">
+            <div className="flex items-baseline gap-3 border-b border-edge pb-1.5">
+              <h3 className="label text-ink-dim">Replayed context</h3>
+              <span className="text-2xs text-ink-mute">
+                {context.length} earlier exchange{context.length === 1 ? "" : "s"} — the prefix the agent client resent
+              </span>
+              <span className="ml-auto">
+                <ExpandAll targetId="replayed-context" />
+              </span>
             </div>
-          </details>
-          <CopyButton text={request.system} className="absolute right-0 top-0.5" />
+            {context.map((group, i) => {
+              const s = exchangeSummary(group);
+              return (
+                <details key={i} className="group/turn relative border-b border-edge/70">
+                  <Node kind="tool" className="-left-[23px] top-[13px]" />
+                  <summary className="flex cursor-pointer select-none items-center gap-3 py-2 pr-1">
+                    <span className="num shrink-0 text-2xs text-ink-mute">{i + 1}</span>
+                    <span className="min-w-0 truncate text-[13px] text-ink-mute transition-colors group-hover/turn:text-ink-dim">
+                      {s.preview}
+                    </span>
+                    <span className="ml-auto flex shrink-0 items-center gap-2">
+                      {s.hasError ? <span className="microlabel text-bad">tool error</span> : null}
+                      {s.tools > 0 ? <span className="microlabel">{s.tools} tool{s.tools === 1 ? "" : "s"}</span> : null}
+                      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true" className="opacity-60 transition-transform duration-150 group-open/turn:rotate-180">
+                        <path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+                      </svg>
+                    </span>
+                  </summary>
+                  <div className="pb-3 pl-4">
+                    <ExchangeBody group={group} byId={byId} consumed={consumed} />
+                  </div>
+                </details>
+              );
+            })}
+          </section>
+        ) : null}
+
+        {current.length > 0 ? (
+          <section>
+            <div className="border-b border-edge pb-1.5">
+              <h3 className="label text-ink-dim">This request</h3>
+            </div>
+            <div className="pt-3">
+              <ExchangeBody group={current} byId={byId} consumed={consumed} threaded />
+            </div>
+          </section>
+        ) : null}
         </div>
-      ) : null}
-
-      {context.length > 0 ? (
-        <section id="replayed-context">
-          <div className="flex items-baseline gap-3 border-b border-edge pb-1.5">
-            <h3 className="label text-ink-dim">Replayed context</h3>
-            <span className="text-2xs text-ink-mute">
-              {context.length} earlier exchange{context.length === 1 ? "" : "s"} — the prefix the agent client resent
-            </span>
-            <span className="ml-auto">
-              <ExpandAll targetId="replayed-context" />
-            </span>
-          </div>
-          {context.map((group, i) => {
-            const s = exchangeSummary(group);
-            return (
-              <details key={i} className="group/turn border-b border-edge/70">
-                <summary className="flex cursor-pointer select-none items-center gap-3 py-2 pr-1">
-                  <span className="num shrink-0 text-2xs text-ink-mute">{i + 1}</span>
-                  <span className="min-w-0 truncate text-[13px] text-ink-mute transition-colors group-hover/turn:text-ink-dim">
-                    {s.preview}
-                  </span>
-                  <span className="ml-auto flex shrink-0 items-center gap-2">
-                    {s.hasError ? <span className="microlabel text-bad">tool error</span> : null}
-                    {s.tools > 0 ? <span className="microlabel">{s.tools} tool{s.tools === 1 ? "" : "s"}</span> : null}
-                    <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true" className="opacity-60 transition-transform duration-150 group-open/turn:rotate-180">
-                      <path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
-                    </svg>
-                  </span>
-                </summary>
-                <div className="pb-3 pl-6">
-                  <ExchangeBody group={group} byId={byId} consumed={consumed} />
-                </div>
-              </details>
-            );
-          })}
-        </section>
-      ) : null}
-
-      {current.length > 0 ? (
-        <section>
-          <div className="border-b border-edge pb-1.5">
-            <h3 className="label text-ink-dim">This request</h3>
-          </div>
-          <div className="pt-3">
-            <ExchangeBody group={current} byId={byId} consumed={consumed} />
-          </div>
-        </section>
-      ) : null}
+      </div>
 
       {response?.message ? (
-        <div className="border-l-2 border-ink pl-4">
-          <div className="mb-1.5 flex items-center gap-2.5">
+        <div className="relative ml-[3px] border-l-2 border-ink pl-[19px]">
+          <div className="mb-1.5 flex items-center gap-2.5 pt-0.5">
             <span className="microlabel text-ink">response</span>
             <ModelChip model={trace.model} provider={trace.provider} />
             <FinishReason reason={response.finish_reason} />
