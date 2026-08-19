@@ -10,9 +10,9 @@ import { fmtUsd, fmtMs } from "@/lib/format";
 /** Inline magnitude bar; width floor keeps tiny values visible. */
 function ShareBar({ share, dim = false }) {
   return (
-    <div className="h-1 w-full bg-edge">
+    <div className="h-[3px] w-full bg-raised">
       <div
-        className={`h-1 bg-chart ${dim ? "opacity-[0.45]" : "opacity-[0.85]"}`}
+        className={`h-full bg-chart ${dim ? "opacity-[0.45]" : "opacity-[0.85]"}`}
         style={{ width: `${Math.max(2, share * 100)}%` }}
       />
     </div>

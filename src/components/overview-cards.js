@@ -28,7 +28,7 @@ export function Kpi({ label, value, sub, href }) {
 /** The KPI row: no box — cells separated by hairline dividers only. */
 export function KpiStrip({ children }) {
   return (
-    <div className="grid grid-cols-2 gap-y-4 md:flex md:items-start md:divide-x md:divide-edge md:[&>*]:pr-6 md:[&>*+*]:pl-6">
+    <div className="grid grid-cols-2 gap-y-4 md:grid-cols-6 md:items-start md:divide-x md:divide-edge md:[&>*]:pr-6 md:[&>*+*]:pl-6">
       {children}
     </div>
   );
