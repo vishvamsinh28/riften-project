@@ -4,7 +4,7 @@
   /* Riften register: pure-black ground, monochrome UI, red only where it
      means something (hover, focus, active, error). Palette lifted from
      riften.ai's own product label spec (n.display / n.secondary / n.accent). */
-  --color-bg: #000000; /* the ground — sidebar and content share it */
+  --color-bg: #000000; /* the ground — nav and content share it */
   --color-surface: #0c0c0c; /* embedded blocks: code, tool calls, inputs */
   --color-raised: #161616; /* hover fills */
   --color-overlay: #0a0a0a; /* floating: popovers, drawer — edge-defined */
@@ -82,6 +82,14 @@
 
 html {
   color-scheme: dark;
+  /* anchored sections stop clear of the sticky top nav */
+  scroll-padding-top: 4rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandMark } from "@/components/app-shell";
+import { BrandMark } from "@/components/brand-mark";
 
 /**
  * 404 boundary — reached mostly via stale trace ids after a re-seed,

@@ -7,6 +7,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { TraceRows } from "@/components/trace-rows";
 import { TRACE_GRID } from "@/components/trace-grid";
 import { PageHeader, PageBody } from "@/components/page-header";
+import { ScrollPagination } from "@/components/scroll-pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,11 @@ function SortHeader({ label, field, filters, rawParams, align = "left" }) {
   );
 }
 
-/** Range summary + prev/next links preserving every other query param. */
+/**
+ * Range summary + prev/next links preserving every other query param.
+ * Rendered as a floating pill inside the scroll-aware fixed shell — it is a
+ * contextual layer, not part of the document flow.
+ */
 function Pagination({ page, total, rawParams }) {
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const link = (p) => {
@@ -50,25 +55,34 @@ function Pagination({ page, total, rawParams }) {
   };
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, page * PAGE_SIZE);
-  const btn = (enabled) =>
-    `btn-ghost inline-flex items-center ${enabled ? "" : "pointer-events-none border-edge text-ink-mute"}`;
+  const btnCls = "label px-2 py-1 text-[11px] transition-colors duration-150";
+  /* A boundary direction renders as a non-interactive span — pointer-events
+     alone would leave a fake-disabled link in the keyboard tab order. */
+  const step = (enabled, href, text) =>
+    enabled ? (
+      <Link href={href} className={`${btnCls} text-ink-dim hover:text-ink`}>
+        {text}
+      </Link>
+    ) : (
+      <span aria-disabled="true" className={`${btnCls} text-ink-mute`}>
+        {text}
+      </span>
+    );
   return (
-    <div className="flex items-center justify-between border-t border-edge px-6 py-2">
-      <span className="num text-xs text-ink-mute">
+    <nav
+      aria-label="Traces pagination"
+      className="flex items-center gap-2 rounded-[10px] border border-edge bg-overlay/95 py-1.5 pl-4 pr-2 shadow-pop backdrop-blur"
+    >
+      <span className="num whitespace-nowrap text-xs text-ink-mute">
         {fmtCount(from)}–{fmtCount(to)} of {fmtCount(total)}
       </span>
-      <div className="flex items-center gap-1">
-        <Link href={page > 1 ? link(page - 1) : "#"} aria-disabled={page <= 1} className={btn(page > 1)}>
-          ← Prev
-        </Link>
-        <span className="num px-2 text-xs text-ink-mute">
-          {page} / {pages}
-        </span>
-        <Link href={page < pages ? link(page + 1) : "#"} aria-disabled={page >= pages} className={btn(page < pages)}>
-          Next →
-        </Link>
-      </div>
-    </div>
+      <span className="h-4 w-px bg-edge" aria-hidden="true" />
+      {step(page > 1, link(page - 1), "← Prev")}
+      <span className="num text-xs text-ink-mute">
+        {page} / {pages}
+      </span>
+      {step(page < pages, link(page + 1), "Next →")}
+    </nav>
   );
 }
 
@@ -146,10 +160,17 @@ export default async function TracesPage({ searchParams }) {
               <span className="microlabel">Signals</span>
             </div>
             <TraceRows rows={rows} />
-            <Pagination page={page} total={results.length} rawParams={rawParams} />
           </div>
         </div>
       </PageBody>
+
+      {/* Outside PageBody: its mount animation briefly makes it a transform
+          containing block, which would re-anchor this fixed layer. */}
+      {results.length > PAGE_SIZE ? (
+        <ScrollPagination>
+          <Pagination page={page} total={results.length} rawParams={rawParams} />
+        </ScrollPagination>
+      ) : null}
     </>
   );
 }

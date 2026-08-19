@@ -1,6 +1,5 @@
 import { Space_Mono, Space_Grotesk, Doto } from "next/font/google";
-import { AppShell } from "@/components/app-shell";
-import { SidebarContent, MobileBar } from "@/components/sidebar";
+import { TopNav } from "@/components/top-nav";
 import "./globals.css";
 
 /* Riften's own stack: Space Mono carries every label, Space Grotesk carries
@@ -34,9 +33,9 @@ export const viewport = {
 };
 
 /**
- * Root shell: collapsible sidebar on the left (top bar on mobile), content
- * column on the right — one continuous black surface, split by a hairline.
- * The sidebar's server-rendered content passes through the client AppShell.
+ * Root shell: a single horizontal top nav over a full-width content column.
+ * No rails, no permanent chrome below the nav — navigation and pagination
+ * appear as floating layers when the user reaches for them.
  */
 export default function RootLayout({ children }) {
   return (
@@ -44,11 +43,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${spaceMono.variable} ${spaceGrotesk.variable} ${doto.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full">
-        <AppShell sidebar={<SidebarContent />}>
-          <MobileBar />
-          {children}
-        </AppShell>
+      <body className="flex min-h-full flex-col">
+        <TopNav />
+        <main className="flex min-h-[calc(100dvh-49px)] flex-1 flex-col">{children}</main>
       </body>
     </html>
   );

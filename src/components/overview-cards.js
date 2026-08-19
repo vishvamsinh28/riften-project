@@ -38,9 +38,9 @@ export function KpiStrip({ children }) {
  * A titled section on the open surface: small heading row, content below,
  * no border box. Pages separate sections with space + hairlines.
  */
-export function Panel({ title, aside, children, className = "", flush = false }) {
+export function Panel({ title, aside, children, className = "", flush = false, id }) {
   return (
-    <section className={className}>
+    <section id={id} className={`scroll-mt-16 ${className}`}>
       <header className="mb-3 flex items-baseline justify-between">
         <h2 className="label text-ink-dim">{title}</h2>
         {aside ? <span className="text-2xs text-ink-mute">{aside}</span> : null}

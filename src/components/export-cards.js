@@ -38,9 +38,9 @@ function LinePreview({ line }) {
 }
 
 /** Unboxed section shell shared by both datasets. */
-function CardShell({ title, subtitle, download, children }) {
+function CardShell({ title, subtitle, download, children, id }) {
   return (
-    <section>
+    <section id={id} className="scroll-mt-16">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="label text-ink-dim">{title}</h2>
@@ -70,6 +70,7 @@ function Stat({ value, unit, label }) {
 export function SftCard({ sft, bytes }) {
   return (
     <CardShell
+      id="sft"
       title="SFT dataset"
       subtitle="OpenAI chat JSONL · one conversation per line · metadata on every line"
       download={<DownloadButton href="/api/export/sft">riften-sft.jsonl</DownloadButton>}
@@ -106,6 +107,7 @@ export function SftCard({ sft, bytes }) {
 export function PreferenceCard({ pref, bytes }) {
   return (
     <CardShell
+      id="preferences"
       title="Preference dataset"
       subtitle="chosen vs rejected over identical context · DPO-ready JSONL"
       download={<DownloadButton href="/api/export/preferences">riften-preferences.jsonl</DownloadButton>}

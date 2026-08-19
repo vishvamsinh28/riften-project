@@ -46,12 +46,12 @@ export default function DashboardPage() {
           <Kpi label="Retries" value={stats.retries} sub={`${stats.toolErrors} tool errors`} href="/traces?feedback=retry" />
         </KpiStrip>
 
-        <Panel title="Request volume" aside="per day · errors in red">
+        <Panel id="volume" title="Request volume" aside="per day · errors in red">
           <DailyTraffic days={daily} />
         </Panel>
 
         <div className="grid gap-5 lg:grid-cols-5">
-          <Panel title="Models" aside="requests · p95 · spend" className="lg:col-span-3" flush>
+          <Panel id="models" title="Models" aside="requests · p95 · spend" className="lg:col-span-3" flush>
             <ModelTable models={stats.models} />
           </Panel>
 
@@ -66,7 +66,7 @@ export default function DashboardPage() {
               </div>
             </Panel>
 
-            <Panel title="Quality signals" aside={`${stats.traces} traces`}>
+            <Panel id="quality" title="Quality signals" aside={`${stats.traces} traces`}>
               <div className="space-y-px">
                 <SignalRow label="Rated strong" count={stats.ratings.strong} total={stats.traces} href="/traces?feedback=strong" dot="bg-good" />
                 <SignalRow label="Rated ok" count={stats.ratings.ok} total={stats.traces} href="/traces?feedback=ok" />

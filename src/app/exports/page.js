@@ -35,7 +35,7 @@ export default function ExportsPage() {
           <PreferenceCard pref={pref} bytes={prefBytes} />
         </div>
 
-        <div id="exclusions">
+        <div id="exclusions" className="scroll-mt-16">
           <Panel
             title="What was excluded, and why"
             aside={`${fmtCount(all.length)} in · ${fmtCount(sft.lines.length)} out · every drop accounted for`}

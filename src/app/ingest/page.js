@@ -49,7 +49,7 @@ export default function IngestPage() {
           </div>
 
           <div className="space-y-5 lg:col-span-2">
-            <Panel title="Or POST directly">
+            <Panel id="api" title="Or POST directly">
               <pre className="codeblock text-2xs leading-4">{CURL}</pre>
               <p className="mt-2 text-xs leading-5 text-ink-mute">
                 Accepts NDJSON (one trace per line) or a JSON array. The response reports every accepted and rejected
@@ -57,7 +57,7 @@ export default function IngestPage() {
               </p>
             </Panel>
 
-            <Panel title="Trace shape" flush>
+            <Panel id="shape" title="Trace shape" flush>
               <div>
                 {FIELDS.map(([field, desc, required]) => (
                   <div key={field} className="flex items-baseline gap-3 border-b border-edge py-[5px] last:border-b-0">

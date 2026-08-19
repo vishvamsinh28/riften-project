@@ -21,7 +21,7 @@ export function Popover({ label, active, children }) {
           <path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
         </svg>
       </summary>
-      <div className="pop-panel absolute left-0 top-full z-30 mt-1.5 min-w-52 border border-edge bg-overlay p-1.5">
+      <div className="pop-panel absolute left-0 top-full z-30 mt-1.5 min-w-52 rounded-[10px] border border-edge bg-overlay/95 p-1.5 backdrop-blur">
         {children}
       </div>
     </details>
