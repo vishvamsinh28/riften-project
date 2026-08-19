@@ -54,10 +54,11 @@ function UnitPre({ children, tone = "text-ink-dim" }) {
 /**
  * One tool exchange as a single unit: the call header + arguments, and —
  * when the transcript carries it — the matching result below an internal
- * divider. Error results frame the whole unit red. `result` is optional:
- * the response's own calls have no result yet.
+ * divider. Error results frame the whole unit red. `result` is optional
+ * (the response's own calls have no result yet); `orphan` marks a result
+ * whose call is missing from the transcript, rendered as such.
  */
-export function ToolUnit({ call, result }) {
+export function ToolUnit({ call, result, orphan = false }) {
   const args = prettyJson(call?.function?.arguments);
   const content = result ? prettyJson(result.content) : null;
   const isError = typeof result?.content === "string" && /^\s*\{\s*"error"/.test(result.content);
@@ -65,41 +66,59 @@ export function ToolUnit({ call, result }) {
 
   return (
     <div className={`border bg-surface ${isError ? "border-bad/40" : "border-edge"}`}>
-      <div className="flex items-center gap-2 border-b border-edge px-3 py-1.5">
-        <span className="text-ink-mute">→</span>
-        <span className="font-mono text-xs text-ink">{call?.function?.name ?? "unknown tool"}</span>
-        <span className="ml-auto font-mono text-2xs text-ink-mute">{call?.id}</span>
-        <CopyButton text={args} />
-      </div>
-      {call?.function?.arguments != null ? <UnitPre>{args}</UnitPre> : null}
+      {/* headers carry no bottom border; each following section owns one top
+          hairline, so skipped sections never stack a doubled line */}
+      {!orphan ? (
+        <div className="flex items-center gap-2 px-3 py-1.5">
+          <span className="text-ink-mute">→</span>
+          <span className="min-w-0 truncate font-mono text-xs text-ink">{call?.function?.name ?? "unknown tool"}</span>
+          <span className="ml-auto min-w-0 truncate font-mono text-2xs text-ink-mute" title={call?.id}>
+            {call?.id}
+          </span>
+          {call?.function?.arguments != null ? <CopyButton text={args} className="shrink-0" /> : null}
+        </div>
+      ) : null}
+      {!orphan && call?.function?.arguments != null ? (
+        <div className="border-t border-edge">
+          <UnitPre>{args}</UnitPre>
+        </div>
+      ) : null}
 
       {result ? (
-        <>
-          <div className={`flex items-center gap-2 border-t px-3 py-1.5 ${isError ? "border-bad/40" : "border-edge"}`}>
+        <div className={!orphan ? `border-t ${isError ? "border-bad/40" : "border-edge"}` : ""}>
+          <div className="flex items-center gap-2 px-3 py-1.5">
             <span className={isError ? "text-bad" : "text-ink-mute"}>←</span>
-            <span className={`font-mono text-2xs ${isError ? "text-bad" : "text-ink-mute"}`}>result</span>
+            <span className={`min-w-0 truncate font-mono text-xs ${isError ? "text-bad" : "text-ink"}`}>
+              {result.name ?? "result"}
+            </span>
             {isError ? (
-              <span className="bg-bad-tint px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] text-bad">error</span>
+              <span className="shrink-0 bg-bad-tint px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] text-bad">error</span>
             ) : null}
-            <CopyButton text={content} className="ml-auto" />
+            {orphan ? <span className="microlabel shrink-0">call not in transcript</span> : null}
+            <span className="ml-auto min-w-0 truncate font-mono text-2xs text-ink-mute" title={result.tool_call_id}>
+              {result.tool_call_id}
+            </span>
+            <CopyButton text={content} className="shrink-0" />
           </div>
-          {long ? (
-            <details>
-              <summary className="num cursor-pointer px-3 py-1.5 text-2xs text-ink-mute hover:text-ink">
-                {content.length.toLocaleString()} chars — expand
-              </summary>
+          <div className={`border-t ${isError ? "border-bad/40" : "border-edge"}`}>
+            {long ? (
+              <details>
+                <summary className="num cursor-pointer px-3 py-1.5 text-2xs text-ink-mute hover:text-ink">
+                  {content.length.toLocaleString()} chars — expand
+                </summary>
+                <UnitPre tone={isError ? "text-bad" : "text-ink-dim"}>{content}</UnitPre>
+              </details>
+            ) : (
               <UnitPre tone={isError ? "text-bad" : "text-ink-dim"}>{content}</UnitPre>
-            </details>
-          ) : (
-            <UnitPre tone={isError ? "text-bad" : "text-ink-dim"}>{content}</UnitPre>
-          )}
-        </>
+            )}
+          </div>
+        </div>
       ) : null}
     </div>
   );
 }
 
-/** A tool result whose call isn't in the transcript — rendered truthfully alone. */
+/** A tool result whose call isn't in the transcript — labeled as exactly that. */
 export function OrphanResult({ message }) {
-  return <ToolUnit call={{ id: message.tool_call_id, function: { name: message.name ?? "tool result" } }} result={message} />;
+  return <ToolUnit orphan result={message} />;
 }
