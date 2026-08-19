@@ -81,7 +81,7 @@ export function SftCard({ sft, bytes }) {
     >
       <div className="flex items-baseline gap-6">
         <Stat value={sft.lines.length} label="conversations" />
-        <Stat value={`${sft.sessionsCovered}/${sft.sessionsTotal}`} label="sessions covered" />
+        <Stat value={`${sft.sessionsCovered}/${sft.sessionsTotal}`} label="sessions represented" />
         <Stat value={(bytes / 1024).toFixed(0)} unit="KB" label="on disk" />
       </div>
       <div className="space-y-1.5 text-[13px] leading-5 text-ink-dim">

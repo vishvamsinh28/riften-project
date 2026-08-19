@@ -23,6 +23,7 @@ const REASON_FILTER_LINKS = {
 const REASON_COLORS = {
   kept: "var(--color-chart)",
   superseded: "var(--color-edge-strong)",
+  duplicate_content: "var(--color-raised)",
   non_2xx: "var(--color-accent-strong)",
   truncated: "var(--color-ink-mute)",
   retried_away: "var(--color-bad)",

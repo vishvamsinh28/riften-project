@@ -5,7 +5,10 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/traces — filtered, paginated trace list using the same query
- * params as the UI. Errors return the standard { success:false } contract.
+ * grammar as the UI: per_page (25/50/100) and page behave exactly like the
+ * explorer, with page clamped to the last non-empty slice; `limit` (max 500)
+ * overrides per_page for API consumers wanting bigger windows.
+ * Errors return the standard { success:false } contract.
  */
 export async function GET(request) {
   try {
@@ -13,12 +16,13 @@ export async function GET(request) {
     const filters = parseFilters(sp);
     const traces = filterTraces(filters);
 
-    const limit = Math.min(500, Math.max(1, parseInt(sp.limit, 10) || 100));
-    const start = (filters.page - 1) * limit;
+    const limit = sp.limit != null ? Math.min(500, Math.max(1, parseInt(sp.limit, 10) || 100)) : filters.per_page;
+    const page = Math.min(filters.page, Math.max(1, Math.ceil(traces.length / limit)));
+    const start = (page - 1) * limit;
     return NextResponse.json({
       success: true,
       total: traces.length,
-      page: filters.page,
+      page,
       limit,
       traces: traces.slice(start, start + limit),
     });

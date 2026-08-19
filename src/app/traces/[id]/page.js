@@ -9,9 +9,15 @@ import { PageHeader, PageBody } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
-/** Page title carries the trace id so browser history stays navigable. */
+/**
+ * Page title carries the trace id so browser history stays navigable.
+ * The existence check lives here because metadata resolves BEFORE the
+ * response streams — notFound() from the page body would fire after the
+ * loading shell flushed with a committed 200 status.
+ */
 export async function generateMetadata({ params }) {
   const { id } = await params;
+  if (!getTrace(id)) notFound();
   return { title: id };
 }
 

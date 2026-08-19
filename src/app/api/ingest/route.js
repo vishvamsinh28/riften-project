@@ -9,21 +9,29 @@ function fail(error, status) {
 }
 
 /**
- * Parse an NDJSON body into rows, tracking per-line parse failures so the
- * caller learns exactly which lines were unreadable.
+ * Parse an NDJSON body into rows, tracking per-line parse failures AND each
+ * parsed row's physical line number, so every reported row number — parse
+ * or validation — points at the same line of the submitted body.
  */
 function parseNdjson(text) {
   const rows = [];
+  const lineOf = []; // rows[i] came from physical line lineOf[i]
   const parseErrors = [];
   text.split("\n").forEach((line, i) => {
     if (!line.trim()) return;
     try {
-      rows.push(JSON.parse(line));
+      const value = JSON.parse(line);
+      if (Array.isArray(value)) {
+        parseErrors.push({ row: i + 1, id: null, error: "line is a JSON array — send Content-Type: application/json, or one object per line" });
+        return;
+      }
+      rows.push(value);
+      lineOf.push(i + 1);
     } catch {
       parseErrors.push({ row: i + 1, id: null, error: "invalid JSON" });
     }
   });
-  return { rows, parseErrors };
+  return { rows, lineOf, parseErrors };
 }
 
 /**
@@ -36,6 +44,7 @@ export async function POST(request) {
   const isSingleJson = contentType.includes("json") && !contentType.includes("ndjson");
 
   let rows;
+  let lineOf = null;
   let parseErrors = [];
   try {
     if (isSingleJson) {
@@ -43,7 +52,7 @@ export async function POST(request) {
       rows = Array.isArray(body) ? body : [body];
     } else {
       const text = await request.text();
-      ({ rows, parseErrors } = parseNdjson(text));
+      ({ rows, lineOf, parseErrors } = parseNdjson(text));
       if (rows.length === 0 && parseErrors.length === 0) return fail("empty body", 400);
     }
   } catch (err) {
@@ -53,7 +62,11 @@ export async function POST(request) {
 
   try {
     const result = ingestRows(rows);
-    const rejected = [...parseErrors, ...result.rejected];
+    // NDJSON validation rejects carry ordinals — map back to physical lines.
+    const validationRejects = lineOf
+      ? result.rejected.map((r) => ({ ...r, row: lineOf[r.row - 1] ?? r.row }))
+      : result.rejected;
+    const rejected = [...parseErrors, ...validationRejects].sort((a, b) => a.row - b.row);
     const total = result.total + parseErrors.length;
     // Nothing accepted from a non-empty body is a data-level failure, but the
     // per-row rejection detail still ships so the caller can fix its rows.

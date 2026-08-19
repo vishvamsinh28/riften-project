@@ -52,7 +52,7 @@ function toRow(t) {
 
 /**
  * The trace explorer: URL-driven filters, sortable columns, paginated rows
- * that open a peek drawer. searchParams is a Promise in this Next version.
+ * that link to each trace's full view. searchParams is a Promise in this Next version.
  */
 export default async function TracesPage({ searchParams }) {
   const sp = await searchParams;

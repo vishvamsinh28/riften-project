@@ -7,7 +7,7 @@ This platform ingests those traces, makes them inspectable, and distills them in
 preference datasets with every dropped row accounted for.
 
 No production traffic is used: `npm run seed` generates a deterministic synthetic corpus
-(478 traces across 96 sessions) in exactly the shape the router emits — multi-turn agent
+(476 traces across 96 sessions) in exactly the shape the router emits — multi-turn agent
 sessions with tool loops, infra retries (429/500), user regenerations, tool errors the model
 recovers from, truncated and stream-cut responses, and eight models across four providers.
 
@@ -65,6 +65,15 @@ OpenAI chat-format JSONL, one conversation per line, `metadata` on every line
 3. **Dedup to one line per session** — the longest eligible transcript; everything shorter is
    a prefix of it (reason: `superseded`). Ties break toward recency, so a retry beats the
    answer it replaced.
+4. **Collapse identical conversations** — traffic repeats itself; byte-identical conversations
+   (ignoring volatile call ids) keep one line so repeats never over-weight training
+   (reason: `duplicate_content`).
+5. **Mask what the user rejected but kept talking over** — a rejected answer replayed inside a
+   kept transcript exports with `weight: 0`: context, never a training target.
+
+The `metadata` key is Riften-added; strip it before uploading to OpenAI:
+`jq -c 'del(.metadata)'`. Hold out eval splits by `metadata.session_id` across both
+files jointly — preference pairs share sessions with kept SFT lines by design.
 
 ## Preference export (`/api/export/preferences`)
 
@@ -75,9 +84,11 @@ with per-side metadata. Pairs come from three signals:
 - **Weak rating** — the original was explicitly rated weak before regeneration.
 - **Continuation rejected** — a rejected turn paired with the accepted alternative over the same context.
 
-A pair only exists when both sides completed over an identical context. Infra retries of
-failed requests carry no rejected answer and are skipped — visibly, with a reason, like
-every other exclusion (`/exports`).
+A pair only exists when both sides completed over an identical context (system, transcript,
+and tool schemas). Identical pairs under different ids collapse to one (`duplicate_pair`),
+and each pair carries a `same_model` flag so cross-model comparisons can be filtered out.
+Infra retries of failed requests carry no rejected answer and are skipped — visibly, with
+a reason, like every other exclusion (`/exports`).
 
 ## Ingest
 
@@ -99,6 +110,6 @@ scripts/generate-corpus.mjs   seeded synthetic corpus generator
 scripts/validate-exports.mjs  invariant suite for the export engine
 data/traces.ndjson            the corpus (regenerate with npm run seed)
 src/lib/store.js              load · normalize · derive · filter · ingest
-src/lib/exports.js            SFT + preference builders, exclusion accounting
+src/lib/export-*.js           SFT + preference builders, dedup, exclusion accounting
 src/app/…                     UI (Next.js 16 App Router) and API routes
 ```

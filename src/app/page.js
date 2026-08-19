@@ -127,7 +127,7 @@ export default async function DashboardPage({ searchParams }) {
             <Link href="/exports" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
               <div className="font-doto text-[26px] font-bold leading-none text-ink">{sft.lines.length}</div>
               <div className="mt-1 text-[13px] text-ink-dim">SFT conversations</div>
-              <div className="text-2xs text-ink-mute">one per session · longest clean transcript</div>
+              <div className="text-2xs text-ink-mute">longest clean transcript per session, deduplicated</div>
             </Link>
             <Link href="/exports" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
               <div className="font-doto text-[26px] font-bold leading-none text-ink">{pref.pairs.length}</div>

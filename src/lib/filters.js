@@ -87,8 +87,10 @@ function activePredicates(f) {
   if (f.feedback.length > 0) preds.push((t) => f.feedback.some((k) => FEEDBACK_PREDICATES[k](t)));
   if (f.truncated) preds.push((t) => t.derived?.truncated === true);
   if (f.toolErrors) preds.push((t) => t.derived?.hasToolError === true);
-  if (f.costMin != null) preds.push((t) => (t.cost_usd ?? 0) >= f.costMin);
-  if (f.costMax != null) preds.push((t) => (t.cost_usd ?? 0) <= f.costMax);
+  // an active cost bound excludes traces with no recorded cost (failed
+  // requests) — "cheaper than X" must not mean "cost unknown"
+  if (f.costMin != null) preds.push((t) => t.cost_usd != null && t.cost_usd >= f.costMin);
+  if (f.costMax != null) preds.push((t) => t.cost_usd != null && t.cost_usd <= f.costMax);
   if (f.latMin != null) preds.push((t) => t.latency_ms >= f.latMin);
   if (f.latMax != null) preds.push((t) => t.latency_ms <= f.latMax);
   if (f.q) {

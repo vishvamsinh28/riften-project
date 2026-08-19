@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/traces/[id] — one full trace (request, response, derived) for
- * the peek drawer. 404s with the standard contract when the id is unknown.
+ * external consumers (the UI navigates to the full page instead). 404s with
+ * the standard contract when the id is unknown.
  */
 export async function GET(request, { params }) {
   try {

@@ -14,16 +14,18 @@ const CURL = `curl -X POST http://localhost:3000/api/ingest \\
   --data-binary @traces.ndjson`;
 
 const FIELDS = [
-  ["id", "unique trace id", true],
+  ["id", "unique trace id — re-ingesting an existing id is rejected", true],
   ["session_id", "conversation the trace belongs to", true],
-  ["ts", "ISO-8601 timestamp", true],
+  ["ts", "strict ISO-8601 timestamp (e.g. 2026-08-19T10:30:00Z)", true],
   ["model", "model that served (or failed) the request", true],
   ["status", "HTTP status from the provider", true],
   ["request.messages", "replayed transcript, OpenAI roles", true],
-  ["latency_ms", "wall-clock latency", true],
+  ["latency_ms", "wall-clock latency, finite ms", true],
+  ["turn", "1-based position in the session", false],
   ["request.system / tools", "system prompt, tool schemas", false],
-  ["response", "assistant message + finish_reason", false],
+  ["response", "on a 200, response.message must be an assistant message", false],
   ["usage / cost_usd", "token counts and computed cost", false],
+  ["error", "null, or an object like { type, message }", false],
   ["truncated", "stream cut before completion", false],
   ["feedback.rating", "weak · ok · strong", false],
   ["feedback.retry_of", "id of the answer this retry replaced", false],
