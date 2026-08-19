@@ -1,6 +1,7 @@
 import { Space_Mono, Space_Grotesk, Doto } from "next/font/google";
 import { TopNav } from "@/components/top-nav";
 import { MobileGate } from "@/components/mobile-gate";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 /* Riften's own stack: Space Mono carries every label, Space Grotesk carries
@@ -52,6 +53,7 @@ export default function RootLayout({ children }) {
           <TopNav />
           <main className="flex min-h-[calc(100dvh-49px)] flex-1 flex-col">{children}</main>
         </div>
+        <Analytics />
       </body>
     </html>
   );

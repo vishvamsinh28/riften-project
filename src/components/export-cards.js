@@ -101,6 +101,16 @@ export function SftCard({ sft, bytes }) {
             targets.
           </p>
         ) : null}
+        {sft.reasonCounts?.duplicate_content > 0 ? (
+          <p>
+            <span className="text-ink">Deduplicated:</span> <span className="num">{sft.reasonCounts.duplicate_content}</span>{" "}
+            identical conversations collapsed to one line each, so repeats never over-weight training.
+          </p>
+        ) : null}
+        <p className="text-ink-mute">
+          The <code className="bg-surface px-1 font-mono text-xs">metadata</code> key is Riften-added — strip it before
+          uploading to OpenAI: <code className="bg-surface px-1 font-mono text-xs">jq -c 'del(.metadata)'</code>
+        </p>
       </div>
       <LinePreview line={sft.lines[0]} />
     </CardShell>
@@ -132,6 +142,13 @@ export function PreferenceCard({ pref, bytes }) {
       <p className="text-[13px] leading-5 text-ink-dim">
         A pair only exists when both sides completed over the <span className="text-ink">same prompt context</span> —
         infra retries of failed requests carry no rejected answer and are skipped.
+        {pref.skipCounts?.duplicate_pair > 0 ? (
+          <>
+            {" "}
+            <span className="num">{pref.skipCounts.duplicate_pair}</span> duplicate pairs (identical context and outputs
+            under different ids) collapsed to one each.
+          </>
+        ) : null}
       </p>
       <LinePreview line={pref.pairs[0]} />
     </CardShell>

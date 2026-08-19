@@ -37,6 +37,10 @@ export const SFT_REASONS = {
     label: "Superseded by longer transcript",
     detail: "Agent clients replay the whole conversation every turn, so this trace is a prefix of the session's longest kept transcript — exporting both would duplicate the same turns.",
   },
+  duplicate_content: {
+    label: "Duplicate conversation",
+    detail: "Byte-identical to an earlier kept conversation (ignoring volatile call ids) — traffic repeats itself, and training on repeats over-weights them.",
+  },
 };
 
 export const PREF_SOURCES = {
@@ -78,5 +82,9 @@ export const PREF_SKIP_REASONS = {
   unpaired_rejection: {
     label: "Rejected continuation, no counterpart",
     detail: "The turn was rejected but no accepted alternative with the same context exists in the session.",
+  },
+  duplicate_pair: {
+    label: "Duplicate pair",
+    detail: "Identical context and outputs to an earlier pair under different ids — kept once so the preference isn't over-weighted.",
   },
 };

@@ -6,15 +6,25 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/export/sft — download the SFT dataset as OpenAI chat-format
- * JSONL, one conversation per line. Errors return the standard contract.
+ * JSONL, one conversation per line. Filenames carry the export date and
+ * line count so re-downloads across corpus changes stay distinguishable.
  */
 export async function GET() {
   try {
     const { lines } = buildSftExport();
-    return new Response(toJsonl(lines), {
+    const body = toJsonl(lines);
+    if (!body) {
+      return NextResponse.json(
+        { success: false, error: "The SFT export is empty — no eligible conversations in the corpus." },
+        { status: 404 }
+      );
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    return new Response(body, {
       headers: {
         "Content-Type": "application/x-ndjson; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="riften-sft.jsonl"',
+        "Content-Length": String(Buffer.byteLength(body, "utf8")),
+        "Content-Disposition": `attachment; filename="riften-sft-${stamp}-${lines.length}conv.jsonl"`,
       },
     });
   } catch (err) {

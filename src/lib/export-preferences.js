@@ -1,5 +1,5 @@
 import { getStore } from "./store.js";
-import { hasAnswer, sameContext, chainEnd, pairLine } from "./export-helpers.js";
+import { hasAnswer, sameContext, chainEnd, pairLine, contentKey } from "./export-helpers.js";
 
 /**
  * Preference export: chosen/rejected pairs over an identical prompt context,
@@ -100,6 +100,7 @@ export function buildPreferenceExport() {
   const skipped = [];
   const handled = new Set();
   const pairedChosenIds = new Set();
+  const seenPairs = new Set(); // content identity — clones under new ids collapse
 
   const fold = (records) => {
     for (const r of records) {
@@ -108,7 +109,15 @@ export function buildPreferenceExport() {
         handled.add(r.trace.id);
         continue;
       }
-      pairs.push(pairLine(r.chosen, r.rejected, r.source));
+      const line = pairLine(r.chosen, r.rejected, r.source);
+      const key = contentKey({ i: line.input.messages, p: line.preferred_output, n: line.non_preferred_output });
+      if (seenPairs.has(key)) {
+        skipped.push({ trace: r.rejected, reason: "duplicate_pair" });
+        handled.add(r.rejected.id);
+        continue;
+      }
+      seenPairs.add(key);
+      pairs.push(line);
       handled.add(r.rejected.id);
       pairedChosenIds.add(r.chosen.id);
     }

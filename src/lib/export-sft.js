@@ -1,5 +1,5 @@
 import { getStore } from "./store.js";
-import { hasAnswer, conversationMessages, lineMetadata } from "./export-helpers.js";
+import { hasAnswer, conversationMessages, lineMetadata, canonicalJson, contentKey } from "./export-helpers.js";
 
 /**
  * SFT export: OpenAI chat-jsonl, one conversation per line. Drops rejected
@@ -8,8 +8,14 @@ import { hasAnswer, conversationMessages, lineMetadata } from "./export-helpers.
  * turn. Every dropped trace is returned with its reason.
  */
 
-/** Exclusion reasons that mean "the user rejected this answer". */
-const REJECTED_REASONS = new Set(["retried_away", "continuation_rejected", "weak_rating"]);
+/**
+ * True when any feedback signal marks this trace's answer as user-rejected.
+ * Read from the signals themselves, not the exclusion reason — precedence
+ * (e.g. "truncated") must never hide a rejection from the masking pass.
+ */
+function isRejectedAnswer(t) {
+  return t.derived?.wasRetried === true || t.feedback?.continuation === "rejected" || t.feedback?.rating === "weak";
+}
 
 /**
  * First matching hard-exclusion reason for a trace, or null when the trace
@@ -33,11 +39,11 @@ function sftExclusionReason(t) {
 function rejectedAnswersBySession(excluded) {
   const bySession = new Map();
   for (const e of excluded) {
-    if (!REJECTED_REASONS.has(e.reason)) continue;
+    if (!isRejectedAnswer(e.trace)) continue;
     const answer = e.trace.response?.message;
     if (!answer) continue;
     const set = bySession.get(e.trace.session_id) ?? new Set();
-    set.add(JSON.stringify(answer));
+    set.add(canonicalJson(answer)); // key-order-proof identity
     bySession.set(e.trace.session_id, set);
   }
   return bySession;
@@ -54,7 +60,7 @@ function buildLine(t, rejectedSet) {
   const messages = source.map((m, i) => {
     const isFinal = i === source.length - 1;
     if (!rejectedSet || m.role !== "assistant" || isFinal) return m;
-    if (!rejectedSet.has(JSON.stringify(m))) return m;
+    if (!rejectedSet.has(canonicalJson(m))) return m;
     masked += 1;
     return { ...m, weight: 0 };
   });
@@ -99,10 +105,25 @@ export function buildSftExport() {
   }
   included.sort((a, b) => a.ts.localeCompare(b.ts));
 
+  // Pass 2.5: collapse exact content repeats across sessions — production
+  // traffic (and this corpus) contains identical conversations under
+  // different ids. The earliest keeps; every collapse is accounted for.
+  const seenContent = new Set();
+  const kept = [];
+  for (const t of included) {
+    const key = contentKey(conversationMessages(t));
+    if (seenContent.has(key)) {
+      excluded.push({ trace: t, reason: "duplicate_content" });
+      continue;
+    }
+    seenContent.add(key);
+    kept.push(t);
+  }
+
   // Pass 3: serialize, loss-masking rejected answers embedded in history.
   const rejectedBySession = rejectedAnswersBySession(excluded);
   let maskedCount = 0;
-  const lines = included.map((t) => {
+  const lines = kept.map((t) => {
     const { line, masked } = buildLine(t, rejectedBySession.get(t.session_id));
     maskedCount += masked;
     return line;
@@ -113,7 +134,7 @@ export function buildSftExport() {
 
   return {
     lines,
-    included,
+    included: kept,
     excluded,
     reasonCounts,
     maskedCount,

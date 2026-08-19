@@ -4,9 +4,32 @@
  * All helpers are pure — they read traces, never modify them.
  */
 
-/** Two traces share a training context iff system prompt and transcript match exactly. */
+/** Deterministic JSON with sorted object keys, for content identity and masking. */
+export function canonicalJson(value) {
+  if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+  if (value && typeof value === "object") {
+    const body = Object.keys(value)
+      .sort()
+      .map((k) => JSON.stringify(k) + ":" + canonicalJson(value[k]))
+      .join(",");
+    return "{" + body + "}";
+  }
+  return JSON.stringify(value) ?? "null"; // undefined/functions serialize as null
+}
+
+/** Content identity for dedup: canonical bytes with volatile call ids blanked. */
+export function contentKey(value) {
+  return canonicalJson(value).replace(/call_[a-z0-9]+/gi, "call_");
+}
+
+/**
+ * Two traces share a training context iff system prompt, transcript, and
+ * tool schemas match exactly — a pair generated under different tools is
+ * not a preference over the same task.
+ */
 export function sameContext(a, b) {
   if ((a.request?.system ?? null) !== (b.request?.system ?? null)) return false;
+  if (JSON.stringify(a.request?.tools ?? null) !== JSON.stringify(b.request?.tools ?? null)) return false;
   return JSON.stringify(a.request?.messages ?? []) === JSON.stringify(b.request?.messages ?? []);
 }
 
@@ -20,12 +43,15 @@ export function hasAnswer(t) {
 }
 
 /**
- * Shield exports from malformed ingested data: OpenAI requires tool-result
- * content to be a string, so coerce anything else without touching the input.
+ * Shield exports from malformed ingested data and off-schema fields: the
+ * current OpenAI tool-message schema is {role, tool_call_id, content} — the
+ * legacy `name` field is dropped — and content must be a string.
  */
 export function asExportMessage(m) {
-  if (m?.role !== "tool" || typeof m.content === "string") return m;
-  return { ...m, content: m.content == null ? "" : JSON.stringify(m.content) };
+  if (m?.role !== "tool") return m;
+  const { name: _name, ...rest } = m;
+  const content = typeof m.content === "string" ? m.content : m.content == null ? "" : JSON.stringify(m.content);
+  return { ...rest, content };
 }
 
 /**
@@ -98,6 +124,8 @@ export function pairLine(chosen, rejected, source) {
     metadata: {
       source,
       session_id: rejected.session_id,
+      // cross-model pairs are valid but confounded — let consumers filter
+      same_model: chosen.model === rejected.model,
       chosen: lineMetadata(chosen),
       rejected: lineMetadata(rejected),
     },

@@ -20,8 +20,9 @@ export default function ExportsPage() {
   const { all } = getStore();
   const sft = buildSftExport();
   const pref = buildPreferenceExport();
-  const sftBytes = toJsonl(sft.lines).length;
-  const prefBytes = toJsonl(pref.pairs).length;
+  // byte length, not UTF-16 code units — the files carry non-ASCII text
+  const sftBytes = Buffer.byteLength(toJsonl(sft.lines), "utf8");
+  const prefBytes = Buffer.byteLength(toJsonl(pref.pairs), "utf8");
 
   return (
     <>
@@ -30,9 +31,16 @@ export default function ExportsPage() {
         sub={`${fmtCount(all.length)} raw traces distilled into training data — nothing dropped silently`}
       />
       <PageBody className="divide-y divide-edge [&>*]:py-6 [&>*:first-child]:pt-0">
-        <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
-          <SftCard sft={sft} bytes={sftBytes} />
-          <PreferenceCard pref={pref} bytes={prefBytes} />
+        <div>
+          <div className="grid gap-x-10 gap-y-8 lg:grid-cols-2">
+            <SftCard sft={sft} bytes={sftBytes} />
+            <PreferenceCard pref={pref} bytes={prefBytes} />
+          </div>
+          <p className="mt-6 border-t border-edge pt-3 text-2xs leading-4 text-ink-mute">
+            The two files share sessions by design — a preference pair's session also yields the kept SFT line.
+            Hold out eval splits by <code className="bg-surface px-1 font-mono">metadata.session_id</code> across both
+            files jointly, never per file.
+          </p>
         </div>
 
         <div id="exclusions" className="scroll-mt-16">

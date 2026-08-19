@@ -6,15 +6,25 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/export/preferences — download the preference dataset as
- * DPO-format JSONL. Errors return the standard contract.
+ * DPO-format JSONL. Filenames carry the export date and pair count so
+ * re-downloads across corpus changes stay distinguishable.
  */
 export async function GET() {
   try {
     const { pairs } = buildPreferenceExport();
-    return new Response(toJsonl(pairs), {
+    const body = toJsonl(pairs);
+    if (!body) {
+      return NextResponse.json(
+        { success: false, error: "The preference export is empty — no valid pairs in the corpus." },
+        { status: 404 }
+      );
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    return new Response(body, {
       headers: {
         "Content-Type": "application/x-ndjson; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="riften-preferences.jsonl"',
+        "Content-Length": String(Buffer.byteLength(body, "utf8")),
+        "Content-Disposition": `attachment; filename="riften-preferences-${stamp}-${pairs.length}pairs.jsonl"`,
       },
     });
   } catch (err) {
