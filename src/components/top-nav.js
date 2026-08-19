@@ -117,9 +117,19 @@ export function TopNav() {
             type="button"
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
-            className="label flex h-full items-center px-2 text-ink shadow-[inset_0_-2px_0_var(--color-accent-strong)]"
+            className="label flex h-full items-center gap-1.5 px-2 text-ink shadow-[inset_0_-2px_0_var(--color-accent-strong)]"
           >
             {current.label}
+            {/* the tell that this is a menu, not just a page title */}
+            <svg
+              width="9"
+              height="9"
+              viewBox="0 0 8 8"
+              aria-hidden="true"
+              className={`opacity-60 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            >
+              <path d="M1 2.5 4 5.5 7 2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
           </button>
 
           {/* Invisible bridge so the cursor can cross the gaps of the stack

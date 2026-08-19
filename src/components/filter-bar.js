@@ -94,7 +94,7 @@ export function FilterBar({ models }) {
   const setFlag = (key, on) => apply((p) => (on ? p.set(key, "1") : p.delete(key)));
 
   return (
-    <div data-pending={isPending ? "" : undefined} className="flex flex-wrap items-center gap-2">
+    <div data-pending={isPending ? "" : undefined} className="relative z-20 flex flex-wrap items-center gap-2">
       <form
         onSubmit={(e) => {
           e.preventDefault();
