@@ -17,6 +17,10 @@ const FEEDBACK_PREDICATES = {
   retry: (t) => t.derived?.isRetry === true,
 };
 
+/** Allowed rows-per-page values; anything else in the URL snaps to the default. */
+export const PER_PAGE_OPTIONS = [25, 50, 100];
+export const PER_PAGE_DEFAULT = 50;
+
 const SORT_KEYS = {
   ts: (t) => t.ts,
   cost: (t) => t.cost_usd ?? -1,
@@ -37,6 +41,7 @@ export function parseFilters(searchParams) {
     const v = parseFloat(sp[key]);
     return Number.isFinite(v) ? v : null;
   };
+  const perPage = parseInt(sp.per_page, 10);
   return {
     model: list("model"),
     status: list("status"), // status classes: "2xx" | "4xx" | "5xx"
@@ -52,6 +57,7 @@ export function parseFilters(searchParams) {
     sort: typeof sp.sort === "string" ? sp.sort : "ts",
     dir: sp.dir === "asc" ? "asc" : "desc",
     page: Math.max(1, parseInt(sp.page, 10) || 1),
+    per_page: PER_PAGE_OPTIONS.includes(perPage) ? perPage : PER_PAGE_DEFAULT,
   };
 }
 

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTrace } from "@/lib/store";
-import { fmtUsd, fmtMs, fmtTokens, fmtTime } from "@/lib/format";
+import { fmtUsd, fmtMs, fmtTime } from "@/lib/format";
 import { ModelChip, StatusDot, FinishReason, SignalStrip } from "@/components/badges";
 import { Transcript } from "@/components/transcript";
-import { Meta, SessionRail, RetryChain, ExportStanding } from "@/components/trace-detail";
+import { Meta, TraceIdTitle, TokenSplit, SessionRail, RetryChain, ExportStanding } from "@/components/trace-detail";
 import { PageHeader, PageBody } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export default async function TracePage({ params }) {
               Traces
             </Link>
             <span className="text-ink-mute">/</span>
-            <span className="font-mono normal-case text-[14px]">{trace.id}</span>
+            <TraceIdTitle id={trace.id} />
           </span>
         }
         sub={`${fmtTime(trace.ts)} UTC`}
@@ -57,9 +57,7 @@ export default async function TracePage({ params }) {
             <FinishReason reason={trace.derived?.finish} />
           </Meta>
           <Meta label="latency">{fmtMs(trace.latency_ms)}</Meta>
-          <Meta label="tokens in / out">
-            {fmtTokens(trace.usage?.prompt_tokens)} / {fmtTokens(trace.usage?.completion_tokens)}
-          </Meta>
+          <TokenSplit usage={trace.usage} />
           <Meta label="cost">{fmtUsd(trace.cost_usd)}</Meta>
           <Meta label="temp">{trace.request?.temperature ?? "—"}</Meta>
           <Meta label="max tokens">{trace.request?.max_tokens ?? "—"}</Meta>

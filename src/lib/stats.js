@@ -49,11 +49,26 @@ function modelRollup(all) {
 const countWhere = (all, pred) => all.filter(pred).length;
 
 /**
+ * Traces in the trailing window of `sinceDays` days ending at the corpus's
+ * own latest timestamp — anchored to the data, not Date.now(), so the range
+ * control works on synthetic corpora. Undefined returns the input untouched.
+ */
+export function recentTraces(all, sinceDays) {
+  if (sinceDays == null || all.length === 0) return all;
+  // `all` is sorted ascending by ts, so the last entry anchors the window.
+  const cutoff = new Date(all[all.length - 1].ts).getTime() - sinceDays * 86_400_000;
+  return all.filter((t) => new Date(t.ts).getTime() >= cutoff);
+}
+
+/**
  * Full corpus summary: volumes, spend, latency quantiles, quality-signal
  * counts, and the per-model rollup. Computed on demand from the live store.
+ * Optional `sinceDays` restricts every figure to the trailing window (see
+ * recentTraces); the default covers the whole corpus.
  */
-export function corpusStats() {
-  const { all, sessions } = getStore();
+export function corpusStats({ sinceDays } = {}) {
+  const { all: whole, sessions } = getStore();
+  const all = recentTraces(whole, sinceDays);
   const okLatencies = all
     .filter((t) => t.status === 200)
     .map((t) => t.latency_ms)
@@ -61,7 +76,8 @@ export function corpusStats() {
 
   return {
     traces: all.length,
-    sessions: sessions.size,
+    // Unfiltered reads keep the store's session count; windows recount.
+    sessions: all === whole ? sessions.size : new Set(all.map((t) => t.session_id)).size,
     cost: all.reduce((s, t) => s + (t.cost_usd ?? 0), 0),
     tokens: all.reduce((s, t) => s + (t.usage?.total_tokens ?? 0), 0),
     errors: countWhere(all, (t) => t.status !== 200),

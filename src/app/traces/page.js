@@ -1,26 +1,18 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { getStore } from "@/lib/store";
-import { parseFilters, filterTraces } from "@/lib/filters";
+import { parseFilters, filterTraces, PER_PAGE_OPTIONS } from "@/lib/filters";
 import { fmtCount } from "@/lib/format";
 import { FilterBar } from "@/components/filter-bar";
 import { TraceRows } from "@/components/trace-rows";
 import { TRACE_GRID } from "@/components/trace-grid";
 import { PageHeader, PageBody } from "@/components/page-header";
 import { ScrollPagination } from "@/components/scroll-pagination";
+import { TracesPagination, paramsFrom } from "@/components/traces-pagination";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Traces" };
-
-const PAGE_SIZE = 50;
-
-/** Rebuild the current query string from raw params, minus empty values. */
-function paramsFrom(rawParams) {
-  const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(rawParams)) if (v) params.set(k, v);
-  return params;
-}
 
 /** Sortable column header; clicking toggles direction on the active field. */
 function SortHeader({ label, field, filters, rawParams, align = "left" }) {
@@ -37,52 +29,6 @@ function SortHeader({ label, field, filters, rawParams, align = "left" }) {
       {label}
       {active ? <span className="text-accent">{filters.dir === "desc" ? "↓" : "↑"}</span> : null}
     </Link>
-  );
-}
-
-/**
- * Range summary + prev/next links preserving every other query param.
- * Rendered as a floating pill inside the scroll-aware fixed shell — it is a
- * contextual layer, not part of the document flow.
- */
-function Pagination({ page, total, rawParams }) {
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const link = (p) => {
-    const params = paramsFrom(rawParams);
-    if (p > 1) params.set("page", String(p));
-    else params.delete("page");
-    return `/traces${params.size ? `?${params}` : ""}`;
-  };
-  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const to = Math.min(total, page * PAGE_SIZE);
-  const btnCls = "label px-2 py-1 text-[11px] transition-colors duration-150";
-  /* A boundary direction renders as a non-interactive span — pointer-events
-     alone would leave a fake-disabled link in the keyboard tab order. */
-  const step = (enabled, href, text) =>
-    enabled ? (
-      <Link href={href} className={`${btnCls} text-ink-dim hover:text-ink`}>
-        {text}
-      </Link>
-    ) : (
-      <span aria-disabled="true" className={`${btnCls} text-ink-mute`}>
-        {text}
-      </span>
-    );
-  return (
-    <nav
-      aria-label="Traces pagination"
-      className="flex items-center gap-2 rounded-[10px] border border-edge bg-overlay/95 py-1.5 pl-4 pr-2 shadow-pop backdrop-blur"
-    >
-      <span className="num whitespace-nowrap text-xs text-ink-mute">
-        {fmtCount(from)}–{fmtCount(to)} of {fmtCount(total)}
-      </span>
-      <span className="h-4 w-px bg-edge" aria-hidden="true" />
-      {step(page > 1, link(page - 1), "← Prev")}
-      <span className="num text-xs text-ink-mute">
-        {page} / {pages}
-      </span>
-      {step(page < pages, link(page + 1), "Next →")}
-    </nav>
   );
 }
 
@@ -117,8 +63,10 @@ export default async function TracesPage({ searchParams }) {
   const filters = parseFilters(rawParams);
   const results = filterTraces(filters);
   const models = [...new Set(getStore().all.map((t) => t.model))].sort();
-  const page = Math.min(filters.page, Math.max(1, Math.ceil(results.length / PAGE_SIZE)));
-  const rows = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(toRow);
+  const perPage = filters.per_page;
+  const page = Math.min(filters.page, Math.max(1, Math.ceil(results.length / perPage)));
+  const rows = results.slice((page - 1) * perPage, page * perPage).map(toRow);
+  const query = paramsFrom(rawParams);
 
   return (
     <>
@@ -134,9 +82,15 @@ export default async function TracesPage({ searchParams }) {
           )
         }
         actions={
-          <span className="microlabel">
-            <span className="num text-xs text-ink-dim">{fmtCount(results.length)}</span> matching
-          </span>
+          <>
+            <span className="microlabel">
+              <span className="num text-xs text-ink-dim">{fmtCount(results.length)}</span> matching
+            </span>
+            {/* Plain <a>: a route-handler download, not a client navigation. */}
+            <a href={`/api/export/traces${query.size ? `?${query}` : ""}`} className="btn-ghost">
+              ↓ CSV
+            </a>
+          </>
         }
       />
       <PageBody className="group space-y-3">
@@ -165,10 +119,11 @@ export default async function TracesPage({ searchParams }) {
       </PageBody>
 
       {/* Outside PageBody: its mount animation briefly makes it a transform
-          containing block, which would re-anchor this fixed layer. */}
-      {results.length > PAGE_SIZE ? (
+          containing block, which would re-anchor this fixed layer. Shown past
+          the smallest density so the rows-per-page control stays reachable. */}
+      {results.length > PER_PAGE_OPTIONS[0] ? (
         <ScrollPagination>
-          <Pagination page={page} total={results.length} rawParams={rawParams} />
+          <TracesPagination page={page} total={results.length} perPage={perPage} rawParams={rawParams} />
         </ScrollPagination>
       ) : null}
     </>

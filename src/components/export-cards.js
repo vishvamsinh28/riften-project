@@ -1,4 +1,5 @@
 import { PREF_SOURCES } from "@/lib/export-reasons";
+import { CopyButton } from "./copy-button";
 
 /**
  * The two dataset cards on the exports page: SFT and preference, each with
@@ -24,15 +25,18 @@ export function DownloadButton({ href, children }) {
 /** Collapsible pretty-printed preview of one export line. */
 function LinePreview({ line }) {
   if (!line) return null;
+  const json = JSON.stringify(line, null, 2);
   return (
     <details className="group">
       <summary className="microlabel cursor-pointer select-none transition-colors hover:text-ink">
         <span className="group-open:hidden">Preview a line ▸</span>
         <span className="hidden group-open:inline">Preview a line ▾</span>
       </summary>
-      <pre className="codeblock mt-2 max-h-72 overflow-auto text-2xs leading-4 text-ink-dim">
-        {JSON.stringify(line, null, 2)}
-      </pre>
+      {/* button sits outside the pre so it stays pinned while the block scrolls */}
+      <div className="relative mt-2">
+        <pre className="codeblock max-h-72 overflow-auto text-2xs leading-4 text-ink-dim">{json}</pre>
+        <CopyButton text={json} className="absolute right-2 top-2 bg-surface pl-1" />
+      </div>
     </details>
   );
 }

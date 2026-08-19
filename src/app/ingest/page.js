@@ -1,5 +1,6 @@
 import { corpusStats } from "@/lib/stats";
 import { fmtCount } from "@/lib/format";
+import { CopyButton } from "@/components/copy-button";
 import { IngestForm } from "@/components/ingest-form";
 import { Panel } from "@/components/overview-cards";
 import { PageHeader, PageBody } from "@/components/page-header";
@@ -50,7 +51,10 @@ export default function IngestPage() {
 
           <div className="space-y-5 lg:col-span-2">
             <Panel id="api" title="Or POST directly">
-              <pre className="codeblock text-2xs leading-4">{CURL}</pre>
+              <div className="relative">
+                <pre className="codeblock text-2xs leading-4">{CURL}</pre>
+                <CopyButton text={CURL} label="copy" className="absolute right-2 top-2 bg-surface pl-1" />
+              </div>
               <p className="mt-2 text-xs leading-5 text-ink-mute">
                 Accepts NDJSON (one trace per line) or a JSON array. The response reports every accepted and rejected
                 row with the validation error.

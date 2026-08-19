@@ -4,22 +4,15 @@ import { buildSftExport } from "@/lib/export-sft";
 import { buildPreferenceExport } from "@/lib/export-preferences";
 import { SFT_REASONS } from "@/lib/export-reasons";
 import { shortId } from "@/lib/format";
+import { CopyButton } from "./copy-button";
 
 /**
- * Side-rail components for the trace detail page: metadata cells, the
- * session timeline, the retry chain strip, and the trace's export standing.
- * All server components reading the live store.
+ * Side-rail components for the trace detail page: the session timeline,
+ * the retry chain strip, and the trace's export standing. All server
+ * components reading the live store; meta-strip cells live in trace-meta.
  */
 
-/** One labeled metadata cell in the header strip. */
-export function Meta({ label, children }) {
-  return (
-    <div>
-      <div className="microlabel">{label}</div>
-      <div className="num mt-0.5 text-[13px] text-ink">{children}</div>
-    </div>
-  );
-}
+export { Meta, TraceIdTitle, TokenSplit } from "./trace-meta";
 
 /** Short status word for a session-rail entry's right edge. */
 function railStatus(t) {
@@ -30,28 +23,42 @@ function railStatus(t) {
 /** The session timeline: every trace of this session, current one highlighted. */
 export function SessionRail({ trace }) {
   const session = getSession(trace.session_id) ?? [];
+  // Slowest turn anchors the waterfall; 1 guards an empty or zero-latency session.
+  const maxLatency = Math.max(1, ...session.map((t) => t.latency_ms ?? 0));
   return (
     <section>
-      <div className="mb-1.5 flex items-baseline justify-between">
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
         <h2 className="label text-ink-dim">Session</h2>
-        <Link href={`/traces?session=${trace.session_id}`} className="ulink font-mono text-2xs">
-          {trace.session_id}
-        </Link>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <Link href={`/traces?session=${trace.session_id}`} className="ulink truncate font-mono text-2xs">
+            {trace.session_id}
+          </Link>
+          <CopyButton text={trace.session_id} />
+        </span>
       </div>
       <div className="-mx-2 max-h-105 overflow-y-auto">
         {session.map((t) => {
           const current = t.id === trace.id;
-          const dot = t.status !== 200 ? "bg-bad" : t.derived?.truncated ? "bg-warn" : "bg-good";
+          const ok = t.status >= 200 && t.status < 300;
+          const dot = !ok ? "bg-bad" : t.derived?.truncated ? "bg-warn" : "bg-good";
+          // 2% floor keeps sub-percent turns visible against the slowest one.
+          const pct = Math.max(2, Math.round((100 * (t.latency_ms ?? 0)) / maxLatency));
           return (
             <Link
               key={t.id}
               href={`/traces/${t.id}`}
-              className={`flex items-center gap-2.5 px-2 py-1.5 text-xs transition-colors duration-100 ${current ? "bg-accent-soft" : "hover:bg-raised"}`}
+              className={`block px-2 py-1.5 text-xs transition-colors duration-100 ${current ? "bg-accent-soft" : "hover:bg-raised"}`}
             >
-              <span className="num w-5 shrink-0 text-right text-ink-mute">{t.turn}</span>
-              <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
-              <span className={`truncate font-mono ${current ? "text-ink" : "text-ink-dim"}`}>{shortId(t.id)}</span>
-              <span className="ml-auto shrink-0 font-mono text-2xs text-ink-mute">{railStatus(t)}</span>
+              <span className="flex items-center gap-2.5">
+                <span className="num w-5 shrink-0 text-right text-ink-mute">{t.turn}</span>
+                <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
+                <span className={`truncate font-mono ${current ? "text-ink" : "text-ink-dim"}`}>{shortId(t.id)}</span>
+                <span className="ml-auto shrink-0 font-mono text-2xs text-ink-mute">{railStatus(t)}</span>
+              </span>
+              {/* Latency waterfall: gray for 2xx turns, red reserved for failures. */}
+              <span className="mt-1 ml-[30px] block h-0.5" aria-hidden="true">
+                <span className={`block h-full ${ok ? "bg-ink-mute" : "bg-accent-strong"}`} style={{ width: `${pct}%` }} />
+              </span>
             </Link>
           );
         })}

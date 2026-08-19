@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getStore } from "@/lib/store";
-import { corpusStats } from "@/lib/stats";
+import { corpusStats, recentTraces } from "@/lib/stats";
 import { buildSftExport } from "@/lib/export-sft";
 import { buildPreferenceExport } from "@/lib/export-preferences";
 import { fmtUsd, fmtMs, fmtTokens, fmtCount, fmtPct, fmtDate } from "@/lib/format";
@@ -11,29 +11,71 @@ import { PageHeader, PageBody } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
+/* Time-range options for the segmented control; null days = whole corpus. */
+const RANGES = [
+  { value: "7d", label: "7D", days: 7 },
+  { value: "14d", label: "14D", days: 14 },
+  { value: "all", label: "ALL", days: null },
+];
+
+/** Segmented time-range control. State lives in the URL: ?range=7d|14d, all = bare /. */
+function RangeControl({ range }) {
+  return (
+    <div className="flex h-[30px] overflow-hidden border border-edge">
+      {RANGES.map(({ value, label }) => {
+        const active = range === value;
+        return (
+          <Link
+            key={value}
+            href={value === "all" ? "/" : `/?range=${value}`}
+            className={`label inline-flex h-[30px] items-center gap-1.5 border-r px-2.5 transition-colors duration-150 last:border-r-0 ${
+              active ? "border-edge-strong text-ink" : "border-edge text-ink-mute hover:text-ink"
+            }`}
+          >
+            {active ? <span className="size-1 rounded-full bg-accent-strong" /> : null}
+            {label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Dashboard: corpus vitals, daily traffic, model mix, latency shape,
  * quality signals, export readiness. Every number links into a
- * pre-filtered trace view.
+ * pre-filtered trace view. ?range= scopes stats and charts to a trailing
+ * window anchored at the corpus's latest trace.
  */
-export default function DashboardPage() {
-  const stats = corpusStats();
+export default async function DashboardPage({ searchParams }) {
+  const sp = await searchParams;
+  const requested = Array.isArray(sp?.range) ? sp.range[0] : sp?.range;
+  const range = requested === "7d" || requested === "14d" ? requested : "all";
+  const sinceDays = RANGES.find((r) => r.value === range).days ?? undefined;
+
+  const stats = corpusStats({ sinceDays });
   const { all } = getStore();
+  const traces = recentTraces(all, sinceDays); // same window the stats use
   const sft = buildSftExport();
   const pref = buildPreferenceExport();
-  const latency = latencyBuckets(all);
-  const daily = dailyBuckets(all);
+  const latency = latencyBuckets(traces);
+  const daily = dailyBuckets(traces);
   const maxLatency = Math.max(1, ...latency.map((b) => b.count));
 
   return (
     <>
       <PageHeader
         title="Dashboard"
-        sub={`${fmtDate(stats.firstTs)} – ${fmtDate(stats.lastTs)} · every request the router served`}
+        sub={`${fmtDate(stats.firstTs)} – ${fmtDate(stats.lastTs)} · ${
+          range === "all" ? "every request the router served" : `trailing ${sinceDays} days of traffic`
+        }`}
         actions={
-          <Link href="/exports" className="btn-primary inline-flex items-center gap-1.5">
-            Build training data
-          </Link>
+          <>
+            <RangeControl range={range} />
+            <Link href="/exports" className="btn-primary inline-flex items-center gap-1.5">
+              Build training data
+            </Link>
+          </>
         }
       />
       <PageBody className="divide-y divide-edge [&>*]:py-5 [&>*:first-child]:pt-0">
@@ -80,7 +122,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <Panel title="Export readiness" aside="what this traffic yields">
+        <Panel title="Export readiness" aside={range === "all" ? "what this traffic yields" : "whole corpus — exports ignore the range"}>
           <div className="grid gap-x-8 gap-y-3 sm:grid-cols-3">
             <Link href="/exports" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
               <div className="font-doto text-[26px] font-bold leading-none text-ink">{sft.lines.length}</div>
