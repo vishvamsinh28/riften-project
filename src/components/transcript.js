@@ -24,7 +24,7 @@ function RichText({ text, className = "" }) {
     }
     if (!parts[i].trim()) continue;
     out.push(
-      <p key={i} className={`whitespace-pre-wrap text-[13px] leading-6 ${className}`}>
+      <p key={i} className={`whitespace-pre-wrap text-[13px] leading-relaxed ${className}`}>
         {parts[i].replace(/\n{3,}/g, "\n\n").trim()}
       </p>
     );
@@ -54,13 +54,13 @@ function ToolCalls({ calls }) {
   return (
     <div className="space-y-2">
       {list.map((c, i) => (
-        <div key={c?.id ?? i} className="overflow-hidden rounded-md border border-edge bg-surface">
-          <div className="flex items-center gap-2 border-b border-edge px-3 py-1.5">
-            <span className="text-accent">→</span>
+        <div key={c?.id ?? i}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-ink-mute">→</span>
             <span className="font-mono text-xs text-ink">{c?.function?.name ?? "unknown tool"}</span>
             <span className="ml-auto font-mono text-2xs text-ink-mute">{c?.id}</span>
           </div>
-          <pre className="overflow-x-auto px-3 py-2 font-mono text-xs leading-5 text-ink-dim">{prettyJson(c?.function?.arguments)}</pre>
+          <pre className="codeblock text-ink-dim">{prettyJson(c?.function?.arguments)}</pre>
         </div>
       ))}
     </div>
@@ -76,23 +76,21 @@ function ToolResult({ message }) {
   const content = prettyJson(message.content);
   const long = content.length > 800;
   const body = (
-    <pre className={`overflow-x-auto px-3 py-2 font-mono text-xs leading-5 ${isError ? "text-bad/90" : "text-ink-dim"}`}>
-      {content}
-    </pre>
+    <pre className={`codeblock ${isError ? "border-bad/40 text-bad" : "text-ink-dim"}`}>{content}</pre>
   );
   return (
-    <div className={`overflow-hidden rounded-md border bg-surface ${isError ? "border-bad/40" : "border-edge"}`}>
-      <div className={`flex items-center gap-2 border-b px-3 py-1.5 ${isError ? "border-bad/30" : "border-edge"}`}>
+    <div>
+      <div className="mb-1 flex items-center gap-2">
         <span className={isError ? "text-bad" : "text-ink-mute"}>←</span>
         <span className="font-mono text-xs text-ink">{message.name ?? "tool result"}</span>
         {isError ? (
-          <span className="rounded-full bg-bad-tint px-2 font-medium text-2xs text-bad">error</span>
+          <span className="bg-bad-tint px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] text-bad">error</span>
         ) : null}
         <span className="ml-auto font-mono text-2xs text-ink-mute">{message.tool_call_id}</span>
       </div>
       {long ? (
         <details>
-          <summary className="cursor-pointer px-3 py-1.5 text-xs text-ink-mute hover:text-ink">
+          <summary className="num cursor-pointer py-0.5 text-2xs text-ink-mute hover:text-ink">
             {content.length.toLocaleString()} chars — expand
           </summary>
           {body}
@@ -108,24 +106,24 @@ function ToolResult({ message }) {
 function Message({ message }) {
   if (message.role === "user") {
     return (
-      <div className="rounded-lg border border-edge bg-surface px-4 py-3">
+      <div className="border-t border-edge pt-3">
         <RoleLabel>user</RoleLabel>
-        <RichText text={message.content} className="text-ink" />
+        <RichText text={message.content} className="text-ink-dim" />
       </div>
     );
   }
   if (message.role === "assistant") {
     return (
-      <div className="px-4 py-1">
-        <RoleLabel>assistant</RoleLabel>
-        {message.content ? <RichText text={message.content} className="text-ink-dim" /> : null}
+      <div className="border-t border-edge pt-3">
+        <RoleLabel tone="text-ink-dim">assistant</RoleLabel>
+        {message.content ? <RichText text={message.content} className="text-ink" /> : null}
         {message.tool_calls ? <div className={message.content ? "mt-2" : ""}><ToolCalls calls={message.tool_calls} /></div> : null}
       </div>
     );
   }
   if (message.role === "tool") {
     return (
-      <div className="px-4 py-1">
+      <div className="border-t border-edge pt-3">
         <ToolResult message={message} />
       </div>
     );
@@ -142,12 +140,12 @@ export function Transcript({ trace }) {
   return (
     <div className="space-y-3">
       {request.system ? (
-        <details className="rounded-lg border border-edge bg-surface">
-          <summary className="cursor-pointer select-none px-4 py-2.5 text-[13px] text-ink-mute transition-colors hover:text-ink">
+        <details className="border-t border-edge">
+          <summary className="cursor-pointer select-none py-2.5 text-[13px] text-ink-mute transition-colors hover:text-ink">
             <span className="microlabel mr-2">system</span>
             {request.system.slice(0, 88)}…
           </summary>
-          <div className="border-t border-edge px-4 py-3">
+          <div className="pb-2">
             <RichText text={request.system} className="text-ink-dim" />
           </div>
         </details>
@@ -158,13 +156,13 @@ export function Transcript({ trace }) {
       ))}
 
       {response?.message ? (
-        <div className="rounded-lg border border-accent/25 bg-accent-soft/50 px-4 py-3">
+        <div className="border-t border-edge-strong pt-3">
           <div className="mb-1.5 flex items-center gap-2.5">
-            <span className="microlabel text-accent/80">response</span>
+            <span className="microlabel text-ink-dim">response</span>
             <ModelChip model={trace.model} provider={trace.provider} />
             <FinishReason reason={response.finish_reason} />
             {trace.derived.truncated ? (
-              <span className="rounded-full bg-warn-tint px-2 font-medium text-2xs text-warn">truncated</span>
+              <span className="bg-warn-tint px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] text-warn">truncated</span>
             ) : null}
           </div>
           {response.message.content ? <RichText text={response.message.content} className="text-ink" /> : null}

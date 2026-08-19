@@ -44,7 +44,7 @@ export default function IngestPage() {
       <PageBody>
         <div className="grid gap-6 lg:grid-cols-5">
           <div className="lg:col-span-3">
-            <h2 className="mb-2 text-[13px] font-semibold text-ink">Paste traces</h2>
+            <h2 className="label mb-2 text-ink-dim">Paste traces</h2>
             <IngestForm />
           </div>
 
@@ -60,11 +60,11 @@ export default function IngestPage() {
             <Panel title="Trace shape" flush>
               <div>
                 {FIELDS.map(([field, desc, required]) => (
-                  <div key={field} className="flex items-baseline gap-3 border-b border-edge/60 py-[5px] last:border-b-0">
-                    <code className="w-40 shrink-0 font-mono text-2xs text-accent">{field}</code>
+                  <div key={field} className="flex items-baseline gap-3 border-b border-edge py-[5px] last:border-b-0">
+                    <code className="w-40 shrink-0 font-mono text-2xs text-ink-dim">{field}</code>
                     <span className="flex-1 text-xs text-ink-mute">{desc}</span>
                     {required ? (
-                      <span className="shrink-0 rounded-full bg-warn-tint px-1.5 text-2xs font-medium text-warn">req</span>
+                      <span className="shrink-0 bg-warn-tint px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] text-warn">req</span>
                     ) : null}
                   </div>
                 ))}

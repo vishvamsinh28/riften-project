@@ -10,9 +10,9 @@ import { fmtUsd, fmtMs } from "@/lib/format";
 /** Inline magnitude bar; width floor keeps tiny values visible. */
 function ShareBar({ share, dim = false }) {
   return (
-    <div className="h-1 w-full rounded-full bg-raised">
+    <div className="h-1 w-full bg-edge">
       <div
-        className={`h-1 rounded-full ${dim ? "bg-chart/50" : "bg-chart"}`}
+        className={`h-1 bg-chart ${dim ? "opacity-[0.45]" : "opacity-[0.85]"}`}
         style={{ width: `${Math.max(2, share * 100)}%` }}
       />
     </div>
@@ -29,18 +29,18 @@ export function ModelTable({ models }) {
     <table className="w-full">
       <thead>
         <tr className="border-b border-edge text-left">
-          <th className="py-2 pr-2 text-left text-2xs font-medium text-ink-mute">Model</th>
-          <th className="py-2 pl-3 text-right text-2xs font-medium text-ink-mute">Req</th>
-          <th className="w-[24%] px-3 py-2 text-2xs font-medium text-ink-mute">Share</th>
-          <th className="py-2 pl-3 text-right text-2xs font-medium text-ink-mute">p95</th>
-          <th className="py-2 pl-3 text-right text-2xs font-medium text-ink-mute">Err</th>
-          <th className="py-2 pl-3 text-right text-2xs font-medium text-ink-mute">Spend</th>
-          <th className="w-[14%] py-2 pl-3 text-left text-2xs font-medium text-ink-mute">Of spend</th>
+          <th className="microlabel py-2 pr-2 text-left">Model</th>
+          <th className="microlabel py-2 pl-3 text-right">Req</th>
+          <th className="microlabel w-[24%] px-3 py-2">Share</th>
+          <th className="microlabel py-2 pl-3 text-right">p95</th>
+          <th className="microlabel py-2 pl-3 text-right">Err</th>
+          <th className="microlabel py-2 pl-3 text-right">Spend</th>
+          <th className="microlabel w-[14%] py-2 pl-3 text-left">Of spend</th>
         </tr>
       </thead>
       <tbody>
         {models.map((m) => (
-          <tr key={m.model} className="group border-b border-edge/60 transition-colors duration-150 last:border-b-0 hover:bg-raised/50">
+          <tr key={m.model} className="group border-b border-edge transition-colors duration-150 last:border-b-0 hover:bg-raised">
             <td className="whitespace-nowrap py-[7px] pr-2">
               <Link href={`/traces?model=${encodeURIComponent(m.model)}`} className="font-mono text-xs text-ink transition-colors group-hover:text-accent">
                 {m.model}
@@ -52,7 +52,7 @@ export function ModelTable({ models }) {
               <ShareBar share={m.count / maxCount} />
             </td>
             <td className="num py-[7px] pl-3 text-right text-xs text-ink-dim">{fmtMs(m.p95)}</td>
-            <td className={`num py-[7px] pl-3 text-right text-xs ${m.errors ? "text-warn" : "text-ink-mute"}`}>
+            <td className={`num py-[7px] pl-3 text-right text-xs ${m.errors ? "text-bad" : "text-ink-mute"}`}>
               {m.errors || "·"}
             </td>
             <td className="num py-[7px] pl-3 text-right text-xs text-ink-dim">{fmtUsd(m.cost, { coarse: true })}</td>

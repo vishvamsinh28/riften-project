@@ -17,7 +17,7 @@ export default function TracesLoading() {
         <div className="-mx-6">
           <div className="h-8 border-y border-edge" />
           {Array.from({ length: 14 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 border-b border-edge/70 px-6 py-2 last:border-b-0">
+            <div key={i} className="flex items-center gap-3 border-b border-edge/70 px-6 py-[7px] last:border-b-0">
               <div className="skeleton h-3 w-16" />
               <div className="skeleton h-3 w-20" />
               <div className="skeleton h-3 w-24" />

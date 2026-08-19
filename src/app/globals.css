@@ -1,37 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* Linear-register palette: neutral near-black surfaces, indigo accent.
-     One continuous surface; elevation only for things that float. */
-  --color-bg: #0e0f10; /* the app surface — sidebar and content share it */
-  --color-surface: #16171a; /* embedded blocks: code, tool calls, inputs */
-  --color-raised: #1d1e22; /* hover fills */
-  --color-overlay: #1a1b1f; /* floating: popovers, drawer */
-  --color-edge: #26282c; /* hairline dividers */
-  --color-edge-strong: #35373d;
-  --color-ink: #eef0f2; /* primary text */
-  --color-ink-dim: #a3a6ad; /* secondary text */
-  --color-ink-mute: #7c8087; /* muted text — ≥4.5:1 on bg */
-  --color-accent: #8b93ff; /* links, active states */
-  --color-accent-strong: #5e6ad2; /* filled buttons — Linear indigo */
-  --color-accent-soft: #1b1d30; /* selected-row tint */
-  --color-chart: #6e78e8;
+  /* Riften register: pure-black ground, monochrome UI, red only where it
+     means something (hover, focus, active, error). Palette lifted from
+     riften.ai's own product label spec (n.display / n.secondary / n.accent). */
+  --color-bg: #000000; /* the ground — sidebar and content share it */
+  --color-surface: #0c0c0c; /* embedded blocks: code, tool calls, inputs */
+  --color-raised: #161616; /* hover fills */
+  --color-overlay: #0a0a0a; /* floating: popovers, drawer — edge-defined */
+  --color-edge: #1f1f1f; /* hairline dividers */
+  --color-edge-strong: #343434;
+  --color-ink: #ffffff; /* n.display */
+  --color-ink-dim: #b0b0b0; /* n.secondary */
+  --color-ink-mute: #757575; /* muted text — ≥4.5:1 on black */
+  --color-accent: #e5484d; /* readable red for text on black */
+  --color-accent-strong: #d71921; /* n.accent — fills, rings, indicators */
+  --color-accent-soft: #1c0708; /* selected-row tint — solid dark maroon */
+  --color-chart: #ffffff; /* charts are white line-work, like the mark */
   --color-good: #3fb950;
   --color-warn: #d9a02e;
-  --color-bad: #f0564f;
+  --color-bad: #e5484d;
   /* solid dark chip fills so status pills never read washed or pale */
-  --color-good-tint: #142a1b;
-  --color-warn-tint: #2b2310;
-  --color-bad-tint: #301718;
+  --color-good-tint: #0d2413;
+  --color-warn-tint: #271d09;
+  --color-bad-tint: #2a0b0d;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-doto: var(--font-doto), var(--font-space-mono), monospace;
 
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
 
-  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-drawer: -16px 0 48px rgba(0, 0, 0, 0.5), -2px 0 12px rgba(0, 0, 0, 0.4);
+  /* square everything — the register has no soft corners */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-drawer: -16px 0 48px rgba(0, 0, 0, 0.6), -2px 0 12px rgba(0, 0, 0, 0.45);
 
   --animate-pop-in: pop-in 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-drawer-in: drawer-in 0.26s cubic-bezier(0.32, 0.72, 0, 1);
@@ -66,7 +77,7 @@
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--color-accent-strong) 45%, transparent);
 }
 
 html {
@@ -76,8 +87,8 @@ html {
 body {
   background: var(--color-bg);
   color: var(--color-ink);
-  font-feature-settings: "cv11", "ss01";
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Quiet dark scrollbars, product-style. */
@@ -86,22 +97,32 @@ body {
   scrollbar-color: var(--color-edge-strong) transparent;
 }
 
-/* One consistent focus treatment everywhere. */
+/* Riften's own focus treatment: hairline red ring, square. */
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
-  outline-offset: 1px;
-  border-radius: 4px;
+  outline: 1px solid var(--color-accent-strong);
+  outline-offset: 3px;
 }
 
 @layer components {
-  /* Tiny metadata / column-header label. */
-  .microlabel {
-    font-size: 0.6875rem;
-    line-height: 1rem;
-    letter-spacing: 0.04em;
+  /* The product label, verbatim from riften.ai: Space Mono 12px, 0.06em,
+     uppercase. Color inherits so it works as display white or secondary. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+  }
+
+  /* Dense variant for column headers / tiny metadata. */
+  .microlabel {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    line-height: 1rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    font-weight: 400;
     color: var(--color-ink-mute);
-    font-weight: 500;
   }
 
   /* numeric columns align with tabular figures */
@@ -110,11 +131,57 @@ body {
     font-variant-numeric: tabular-nums;
   }
 
+  /* Underlined text link, the riften.ai idiom: gray at rest, red on hover. */
+  .ulink {
+    color: var(--color-ink-dim);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: color 0.15s ease;
+  }
+  .ulink:hover {
+    color: var(--color-accent);
+  }
+
+  /* Primary action: white fill, black label — the only loud element. */
+  .btn-primary {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--color-ink);
+    color: #000000;
+    padding: 0.4375rem 0.875rem;
+    transition: background-color 0.15s ease;
+  }
+  .btn-primary:hover {
+    background: var(--color-ink-dim);
+  }
+  .btn-primary:disabled {
+    background: var(--color-edge-strong);
+    color: var(--color-ink-mute);
+  }
+
+  /* Quiet action: hairline box that sharpens on hover. */
+  .btn-ghost {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--color-edge-strong);
+    color: var(--color-ink-dim);
+    padding: 0.375rem 0.875rem;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-ghost:hover {
+    color: var(--color-ink);
+    border-color: var(--color-ink-mute);
+  }
+
   /* transcript / snippet code blocks */
   .codeblock {
     background: var(--color-surface);
     border: 1px solid var(--color-edge);
-    border-radius: 6px;
     padding: 0.625rem 0.75rem;
     overflow-x: auto;
     font-family: var(--font-mono);
@@ -128,7 +195,6 @@ body {
     appearance: none;
     width: 0.875rem;
     height: 0.875rem;
-    border-radius: 4px;
     border: 1px solid var(--color-edge-strong);
     background: var(--color-surface) center / 10px no-repeat;
     flex-shrink: 0;
@@ -159,8 +225,7 @@ body {
 
   /* loading skeleton bar */
   .skeleton {
-    border-radius: 4px;
-    background: linear-gradient(90deg, #17181b 25%, #1e1f23 50%, #17181b 75%);
+    background: linear-gradient(90deg, #0e0e0e 25%, #181818 50%, #0e0e0e 75%);
     background-size: 200% 100%;
     animation: var(--animate-shimmer);
   }

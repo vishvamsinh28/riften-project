@@ -30,13 +30,13 @@ export function TraceRows({ rows }) {
         <button
           key={t.id}
           onClick={() => setPeek(t.id)}
-          className={`${TRACE_GRID} w-full border-b border-edge/70 px-6 py-[7px] text-left transition-colors duration-100 last:border-b-0 hover:bg-raised/60 ${
-            peek === t.id ? "bg-accent-soft/70" : ""
+          className={`${TRACE_GRID} w-full border-b border-edge/70 px-6 py-[7px] text-left transition-colors duration-100 last:border-b-0 hover:bg-raised ${
+            peek === t.id ? "bg-accent-soft" : ""
           }`}
         >
           <span className="num whitespace-nowrap text-xs text-ink-mute">{fmtTime(t.ts)}</span>
-          <span className="truncate font-mono text-xs text-accent">{shortId(t.id)}</span>
-          <span className="truncate font-mono text-xs text-ink-mute">
+          <span className="num truncate text-xs text-ink-dim">{shortId(t.id)}</span>
+          <span className="num truncate text-xs text-ink-mute">
             {shortId(t.session_id)}
             <span className="ml-1">·{t.turn}</span>
           </span>

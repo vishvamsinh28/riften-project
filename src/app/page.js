@@ -31,10 +31,7 @@ export default function DashboardPage() {
         title="Dashboard"
         sub={`${fmtDate(stats.firstTs)} – ${fmtDate(stats.lastTs)} · every request the router served`}
         actions={
-          <Link
-            href="/exports"
-            className="rounded-md bg-accent-strong px-3 py-1.5 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#3d7af0]"
-          >
+          <Link href="/exports" className="btn-primary inline-flex items-center gap-1.5">
             Build training data
           </Link>
         }
@@ -62,10 +59,10 @@ export default function DashboardPage() {
             <Panel title="Latency distribution" aside="successful requests">
               <Histogram buckets={latency} maxCount={maxLatency} />
               <div className="mt-1.5 flex justify-between">
-                <span className="text-2xs text-ink-mute">0</span>
-                <span className="text-2xs text-ink-mute">2s</span>
-                <span className="text-2xs text-ink-mute">8s</span>
-                <span className="text-2xs text-ink-mute">&gt;40s</span>
+                <span className="microlabel">0</span>
+                <span className="microlabel">2s</span>
+                <span className="microlabel">8s</span>
+                <span className="microlabel">&gt;40s</span>
               </div>
             </Panel>
 
@@ -85,22 +82,22 @@ export default function DashboardPage() {
 
         <Panel title="Export readiness" aside="what this traffic yields">
           <div className="grid gap-x-8 gap-y-3 sm:grid-cols-3">
-            <Link href="/exports" className="-mx-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
-              <div className="num text-lg font-semibold text-ink">{sft.lines.length}</div>
-              <div className="text-[13px] text-ink-dim">SFT conversations</div>
+            <Link href="/exports" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
+              <div className="font-doto text-[26px] font-bold leading-none text-ink">{sft.lines.length}</div>
+              <div className="mt-1 text-[13px] text-ink-dim">SFT conversations</div>
               <div className="text-2xs text-ink-mute">one per session · longest clean transcript</div>
             </Link>
-            <Link href="/exports" className="-mx-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
-              <div className="num text-lg font-semibold text-ink">{pref.pairs.length}</div>
-              <div className="text-[13px] text-ink-dim">preference pairs</div>
+            <Link href="/exports" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
+              <div className="font-doto text-[26px] font-bold leading-none text-ink">{pref.pairs.length}</div>
+              <div className="mt-1 text-[13px] text-ink-dim">preference pairs</div>
               <div className="text-2xs text-ink-mute">
                 {pref.sourceCounts.retrial ?? 0} retrial · {pref.sourceCounts.weak_rating ?? 0} weak ·{" "}
                 {pref.sourceCounts.continuation_rejected ?? 0} rejected cont
               </div>
             </Link>
-            <Link href="/exports#exclusions" className="-mx-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
-              <div className="num text-lg font-semibold text-ink">{sft.excluded.length}</div>
-              <div className="text-[13px] text-ink-dim">traces excluded from SFT</div>
+            <Link href="/exports#exclusions" className="-mx-2 px-2 py-1.5 transition-colors duration-150 hover:bg-raised">
+              <div className="font-doto text-[26px] font-bold leading-none text-ink">{sft.excluded.length}</div>
+              <div className="mt-1 text-[13px] text-ink-dim">traces excluded from SFT</div>
               <div className="text-2xs text-ink-mute">every one accounted for, by reason</div>
             </Link>
           </div>

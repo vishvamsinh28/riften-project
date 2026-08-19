@@ -16,7 +16,7 @@ import { Transcript } from "./transcript";
 function Cell({ label, children }) {
   return (
     <div>
-      <div className="text-2xs font-medium text-ink-mute">{label}</div>
+      <div className="microlabel">{label}</div>
       <div className="num mt-0.5 text-[13px] text-ink">{children}</div>
     </div>
   );
@@ -86,22 +86,22 @@ export function TraceDrawer({ traceId, onClose }) {
       <aside
         role="dialog"
         aria-label={`Trace ${traceId}`}
-        className="absolute inset-y-0 right-0 flex w-full max-w-[720px] animate-drawer-in flex-col border-l border-edge bg-bg shadow-drawer"
+        className="absolute inset-y-0 right-0 flex w-full max-w-[720px] animate-drawer-in flex-col border-l border-edge bg-overlay shadow-drawer"
       >
         <header className="flex items-center gap-3 border-b border-edge px-5 py-3">
-          <span className="truncate font-mono text-[13px] font-medium text-ink">{traceId}</span>
+          <span className="num truncate text-xs text-ink">{traceId}</span>
           {trace ? <span className="num shrink-0 text-2xs text-ink-mute">{fmtTime(trace.ts)} UTC</span> : null}
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             <Link
               href={`/traces/${traceId}`}
-              className="rounded-md border border-edge px-2.5 py-1 text-xs text-ink-dim transition-colors duration-150 hover:border-edge-strong hover:text-ink"
+              className="btn-ghost inline-flex shrink-0 items-center"
             >
               Open full view
             </Link>
             <button
               onClick={onClose}
               aria-label="Close"
-              className="flex size-7 items-center justify-center rounded-md text-ink-mute transition-colors duration-150 hover:bg-raised hover:text-ink"
+              className="flex size-7 items-center justify-center text-ink-mute transition-colors duration-150 hover:bg-raised hover:text-ink"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
                 <path d="m2 2 8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -111,7 +111,7 @@ export function TraceDrawer({ traceId, onClose }) {
         </header>
 
         {error ? (
-          <p className="m-5 rounded-md border border-bad/30 bg-bad-tint px-3 py-2 text-[13px] text-bad">{error}</p>
+          <p className="m-5 border border-bad/40 bg-bad-tint px-3 py-2 text-[13px] text-bad">{error}</p>
         ) : !trace ? (
           <DrawerSkeleton />
         ) : (
@@ -134,8 +134,8 @@ export function TraceDrawer({ traceId, onClose }) {
               <SignalStrip trace={trace} />
             </div>
             {trace.error ? (
-              <div className="mx-5 mt-4 rounded-md border border-bad/30 bg-bad-tint px-3 py-2">
-                <div className="text-2xs font-medium text-bad">provider error · {trace.error.type ?? "unknown"}</div>
+              <div className="mx-5 mt-4 border border-bad/40 bg-bad-tint px-3 py-2">
+                <div className="font-mono text-2xs text-bad">provider error · {trace.error.type ?? "unknown"}</div>
                 <p className="mt-0.5 text-xs text-ink-dim">{trace.error.message ?? "No detail recorded."}</p>
               </div>
             ) : null}

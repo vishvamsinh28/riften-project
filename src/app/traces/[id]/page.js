@@ -35,11 +35,11 @@ export default async function TracePage({ params }) {
       <PageHeader
         title={
           <span className="flex items-center gap-2">
-            <Link href="/traces" className="text-ink-mute transition-colors duration-150 hover:text-ink">
+            <Link href="/traces" className="ulink">
               Traces
             </Link>
             <span className="text-ink-mute">/</span>
-            <span className="font-mono text-[14px]">{trace.id}</span>
+            <span className="font-mono normal-case text-[14px]">{trace.id}</span>
           </span>
         }
         sub={`${fmtTime(trace.ts)} UTC`}
@@ -69,9 +69,12 @@ export default async function TracePage({ params }) {
         </div>
 
         {trace.error ? (
-          <div className="rounded-md border border-bad/30 bg-bad-tint px-4 py-3">
-            <div className="text-2xs font-medium text-bad">provider error · {trace.error.type ?? "unknown"}</div>
-            <p className="mt-1 text-[13px] text-ink-dim">{trace.error.message ?? "No detail recorded."}</p>
+          <div className="border border-bad/40 bg-bad-tint px-4 py-3">
+            <div className="flex items-baseline gap-2">
+              <span className="microlabel text-bad">provider error</span>
+              <span className="font-mono text-2xs text-bad">{trace.error.type ?? "unknown"}</span>
+            </div>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-dim">{trace.error.message ?? "No detail recorded."}</p>
           </div>
         ) : null}
 
@@ -81,7 +84,7 @@ export default async function TracePage({ params }) {
           <div className="lg:col-span-2">
             <Transcript trace={trace} />
             <details className="mt-5">
-              <summary className="cursor-pointer select-none text-[13px] text-ink-mute transition-colors duration-150 hover:text-ink">
+              <summary className="label cursor-pointer select-none text-ink-mute transition-colors duration-150 hover:text-ink">
                 Raw trace JSON
               </summary>
               <pre className="codeblock mt-2 max-h-96 overflow-auto text-2xs leading-4 text-ink-dim">

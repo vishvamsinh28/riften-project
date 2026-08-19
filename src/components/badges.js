@@ -7,7 +7,7 @@
 export function ModelChip({ model, provider, className = "" }) {
   return (
     <span
-      className={`inline-flex max-w-full items-center truncate rounded bg-raised px-1.5 py-px font-mono text-2xs text-ink-dim ${className}`}
+      className={`inline-flex max-w-full items-center truncate border border-edge bg-transparent px-1.5 py-px font-mono text-2xs text-ink-dim ${className}`}
       title={provider}
     >
       {model}
@@ -26,7 +26,7 @@ export function StatusDot({ status }) {
   );
 }
 
-/* Soft pill styles per signal kind: tinted fill + readable dark text. */
+/* Square chip styles per signal kind: solid dark tint fill + readable text. */
 const PILL_STYLES = {
   strong: "bg-good-tint text-good",
   ok: "bg-raised text-ink-dim",
@@ -48,7 +48,7 @@ export function Signal({ kind, children, title }) {
   return (
     <span
       title={title}
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-px font-medium text-2xs ${PILL_STYLES[kind] ?? PILL_STYLES.neutral}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap px-1.5 py-px font-mono text-2xs uppercase tracking-[0.04em] ${PILL_STYLES[kind] ?? PILL_STYLES.neutral}`}
     >
       {children}
     </span>
@@ -78,6 +78,6 @@ export function SignalStrip({ trace }) {
 export function FinishReason({ reason }) {
   if (!reason) return <span className="text-ink-mute">—</span>;
   const tint =
-    reason === "stop" ? "text-ink-dim" : reason === "tool_calls" ? "text-accent" : reason === "length" ? "text-warn" : "text-bad";
+    reason === "stop" ? "text-ink-dim" : reason === "tool_calls" ? "text-ink" : reason === "length" ? "text-warn" : "text-bad";
   return <span className={`font-mono text-2xs ${tint}`}>{reason}</span>;
 }

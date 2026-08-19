@@ -31,7 +31,7 @@ function SortHeader({ label, field, filters, rawParams, align = "left" }) {
   return (
     <Link
       href={`/traces?${params}`}
-      className={`flex items-center gap-1 text-2xs font-medium text-ink-mute transition-colors duration-150 hover:text-ink ${align === "right" ? "justify-end" : ""} ${active ? "text-ink-dim" : ""}`}
+      className={`microlabel flex items-center gap-1 transition-colors duration-150 hover:text-ink ${align === "right" ? "justify-end" : ""} ${active ? "text-ink-dim" : ""}`}
     >
       {label}
       {active ? <span className="text-accent">{filters.dir === "desc" ? "↓" : "↑"}</span> : null}
@@ -51,12 +51,10 @@ function Pagination({ page, total, rawParams }) {
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, page * PAGE_SIZE);
   const btn = (enabled) =>
-    `rounded-md border border-edge px-2 py-1 text-xs transition-colors duration-150 ${
-      enabled ? "text-ink-dim hover:bg-raised hover:text-ink" : "pointer-events-none text-ink-mute/60"
-    }`;
+    `btn-ghost inline-flex items-center ${enabled ? "" : "pointer-events-none border-edge text-ink-mute"}`;
   return (
     <div className="flex items-center justify-between border-t border-edge px-6 py-2">
-      <span className="text-xs text-ink-mute">
+      <span className="num text-xs text-ink-mute">
         {fmtCount(from)}–{fmtCount(to)} of {fmtCount(total)}
       </span>
       <div className="flex items-center gap-1">
@@ -115,15 +113,15 @@ export default async function TracesPage({ searchParams }) {
         sub={
           filters.session ? (
             <>
-              session <span className="font-mono text-accent">{filters.session}</span>
+              session <span className="font-mono text-ink-dim">{filters.session}</span>
             </>
           ) : (
             "every router request, with quality signals"
           )
         }
         actions={
-          <span className="text-xs text-ink-mute">
-            <span className="num text-ink-dim">{fmtCount(results.length)}</span> matching
+          <span className="microlabel">
+            <span className="num text-xs text-ink-dim">{fmtCount(results.length)}</span> matching
           </span>
         }
       />
@@ -136,16 +134,16 @@ export default async function TracesPage({ searchParams }) {
           <div className="min-w-[1220px]">
             <div className={`${TRACE_GRID} border-b border-edge px-6 py-2`}>
               <SortHeader label="Time" field="ts" filters={filters} rawParams={rawParams} />
-              <span className="text-2xs font-medium text-ink-mute">Trace</span>
-              <span className="text-2xs font-medium text-ink-mute">Session</span>
-              <span className="text-2xs font-medium text-ink-mute">Model</span>
-              <span className="text-2xs font-medium text-ink-mute">Status</span>
-              <span className="text-2xs font-medium text-ink-mute">Finish</span>
+              <span className="microlabel">Trace</span>
+              <span className="microlabel">Session</span>
+              <span className="microlabel">Model</span>
+              <span className="microlabel">Status</span>
+              <span className="microlabel">Finish</span>
               <SortHeader label="Msgs" field="turns" filters={filters} rawParams={rawParams} align="right" />
               <SortHeader label="Tokens" field="tokens" filters={filters} rawParams={rawParams} align="right" />
               <SortHeader label="Latency" field="latency" filters={filters} rawParams={rawParams} align="right" />
               <SortHeader label="Cost" field="cost" filters={filters} rawParams={rawParams} align="right" />
-              <span className="text-2xs font-medium text-ink-mute">Signals</span>
+              <span className="microlabel">Signals</span>
             </div>
             <TraceRows rows={rows} />
             <Pagination page={page} total={results.length} rawParams={rawParams} />

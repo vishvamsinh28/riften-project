@@ -18,17 +18,18 @@ const REASON_FILTER_LINKS = {
   weak_rating: "/traces?feedback=weak",
 };
 
-/* Kept + per-reason segment colors; statuses always ship with labels. */
+/* Monochrome + red register: white kept, grays for benign drops, red only
+   for the error/rejected family. Legend labels carry the distinctions. */
 const REASON_COLORS = {
   kept: "var(--color-chart)",
-  superseded: "#b6bdc9",
-  non_2xx: "var(--color-bad)",
-  truncated: "var(--color-warn)",
-  retried_away: "#64748b",
-  continuation_rejected: "#e11d48",
-  weak_rating: "#ca8a04",
-  empty_response: "#94a3b8",
-  content_filter: "#7c3aed",
+  superseded: "var(--color-edge-strong)",
+  non_2xx: "var(--color-accent-strong)",
+  truncated: "var(--color-ink-mute)",
+  retried_away: "var(--color-bad)",
+  continuation_rejected: "var(--color-bad)",
+  weak_rating: "var(--color-bad)",
+  empty_response: "var(--color-ink-dim)",
+  content_filter: "var(--color-ink-dim)",
 };
 
 /** Collapsible chip list of excluded traces, capped for very long groups. */
@@ -37,7 +38,7 @@ function ExcludedList({ entries }) {
   const shown = entries.slice(0, 24);
   return (
     <details>
-      <summary className="cursor-pointer text-2xs text-ink-mute transition-colors hover:text-ink">
+      <summary className="microlabel cursor-pointer transition-colors hover:text-ink">
         {entries.length} trace{entries.length === 1 ? "" : "s"} — show
       </summary>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -45,7 +46,7 @@ function ExcludedList({ entries }) {
           <Link
             key={e.trace.id}
             href={`/traces/${e.trace.id}`}
-            className="rounded border border-edge bg-surface px-1.5 py-0.5 font-mono text-2xs text-accent transition-colors duration-150 hover:border-edge-strong hover:bg-raised"
+            className="border border-edge bg-surface px-1.5 py-0.5 font-mono text-2xs text-ink-dim transition-colors duration-150 hover:border-edge-strong hover:bg-raised hover:text-ink"
           >
             {shortId(e.trace.id)}
           </Link>
@@ -72,7 +73,7 @@ export function CompositionBar({ sft }) {
     ...Object.entries(sft.reasonCounts)
       .filter(([, v]) => v > 0)
       .map(([k, v]) => ({ key: k, label: SFT_REASONS[k]?.label ?? k, value: v })),
-  ].map((s) => ({ ...s, color: REASON_COLORS[s.key] ?? "#5a616e" }));
+  ].map((s) => ({ ...s, color: REASON_COLORS[s.key] ?? "var(--color-ink-mute)" }));
 
   return (
     <>
@@ -80,7 +81,7 @@ export function CompositionBar({ sft }) {
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         {segments.map((s) => (
           <span key={s.key} className="flex items-center gap-1.5 text-2xs text-ink-mute">
-            <span className="size-2 rounded-[3px]" style={{ background: s.color }} />
+            <span className="size-2" style={{ background: s.color }} />
             {s.label} <span className="num text-ink-dim">{s.value}</span>
           </span>
         ))}
@@ -99,11 +100,11 @@ export function SftExclusionTable({ sft, total }) {
   return (
     <div className="mt-5 overflow-x-auto">
       <div className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-center gap-x-4 border-y border-edge px-0 py-2 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]">
-        <span className="text-2xs font-medium text-ink-mute">Reason</span>
-        <span className="text-2xs font-medium text-ink-mute text-right">Traces</span>
-        <span className="text-2xs font-medium text-ink-mute text-right">Share</span>
-        <span className="text-2xs font-medium text-ink-mute">Why it&apos;s out</span>
-        <span className="hidden text-2xs font-medium text-ink-mute md:block">Excluded traces</span>
+        <span className="microlabel">Reason</span>
+        <span className="microlabel text-right">Traces</span>
+        <span className="microlabel text-right">Share</span>
+        <span className="microlabel">Why it&apos;s out</span>
+        <span className="microlabel hidden md:block">Excluded traces</span>
       </div>
       {rows.map(([reason, count]) => {
         const meta = SFT_REASONS[reason] ?? { label: reason, detail: "" };
@@ -113,11 +114,11 @@ export function SftExclusionTable({ sft, total }) {
             key={reason}
             className="grid min-w-[560px] grid-cols-[minmax(150px,190px)_56px_52px_1fr] items-start gap-x-4 border-b border-edge/60 px-0 py-2.5 last:border-b-0 md:grid-cols-[190px_56px_52px_minmax(280px,1fr)_minmax(160px,240px)]"
           >
-            <span className="flex items-center gap-2 text-[13px] text-ink">
-              <span className="size-2 shrink-0 rounded-[3px]" style={{ background: REASON_COLORS[reason] ?? "#5a616e" }} />
-              {href ? <Link href={href} className="hover:text-accent">{meta.label}</Link> : meta.label}
+            <span className="flex items-center gap-2 text-[13px] text-ink-dim">
+              <span className="size-2 shrink-0" style={{ background: REASON_COLORS[reason] ?? "var(--color-ink-mute)" }} />
+              {href ? <Link href={href} className="ulink">{meta.label}</Link> : meta.label}
             </span>
-            <span className="num pt-px text-right text-[13px] text-ink-dim">{count}</span>
+            <span className="num pt-px text-right text-xs text-ink">{count}</span>
             <span className="num pt-px text-right text-xs text-ink-mute">{fmtPct(count, total)}</span>
             <span className="text-xs leading-5 text-ink-mute">{meta.detail}</span>
             <span className="col-span-full mt-1.5 md:col-span-1 md:mt-0">
@@ -149,8 +150,8 @@ export function PrefSkipTable({ pref }) {
             key={reason}
             className="grid min-w-[520px] grid-cols-[minmax(150px,220px)_56px_1fr] items-start gap-x-4 border-b border-edge/60 py-2.5 last:border-b-0 md:grid-cols-[220px_56px_minmax(280px,1fr)_minmax(160px,240px)]"
           >
-            <span className="text-[13px] text-ink">{meta.label}</span>
-            <span className="num text-right text-[13px] text-ink-dim">{count}</span>
+            <span className="text-[13px] text-ink-dim">{meta.label}</span>
+            <span className="num text-right text-xs text-ink">{count}</span>
             <span className="text-xs leading-5 text-ink-mute">{meta.detail}</span>
             <span className="col-span-full mt-1.5 md:col-span-1 md:mt-0">
               <ExcludedList entries={grouped[reason]} />

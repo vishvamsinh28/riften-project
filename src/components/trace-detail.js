@@ -33,8 +33,8 @@ export function SessionRail({ trace }) {
   return (
     <section>
       <div className="mb-1.5 flex items-baseline justify-between">
-        <h2 className="text-[13px] font-semibold text-ink">Session</h2>
-        <Link href={`/traces?session=${trace.session_id}`} className="font-mono text-2xs text-accent hover:underline">
+        <h2 className="label text-ink-dim">Session</h2>
+        <Link href={`/traces?session=${trace.session_id}`} className="ulink font-mono text-2xs">
           {trace.session_id}
         </Link>
       </div>
@@ -46,7 +46,7 @@ export function SessionRail({ trace }) {
             <Link
               key={t.id}
               href={`/traces/${t.id}`}
-              className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs transition-colors duration-100 ${current ? "bg-accent-soft" : "hover:bg-raised"}`}
+              className={`flex items-center gap-2.5 px-2 py-1.5 text-xs transition-colors duration-100 ${current ? "bg-accent-soft" : "hover:bg-raised"}`}
             >
               <span className="num w-5 shrink-0 text-right text-ink-mute">{t.turn}</span>
               <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
@@ -79,7 +79,7 @@ export function RetryChain({ trace }) {
       <span className="microlabel">retry chain</span>
       {original ? (
         <>
-          <Link href={`/traces/${original.id}`} className="font-mono text-xs text-accent hover:underline">
+          <Link href={`/traces/${original.id}`} className="ulink font-mono text-xs">
             {shortId(original.id)}
           </Link>
           <span className="text-ink-mute">({retryReason(original)})</span>
@@ -92,7 +92,7 @@ export function RetryChain({ trace }) {
       {retries.map((r) => (
         <span key={r.id} className="flex items-center gap-2">
           <span className="text-ink-mute">→</span>
-          <Link href={`/traces/${r.id}`} className="font-mono text-xs text-accent hover:underline">
+          <Link href={`/traces/${r.id}`} className="ulink font-mono text-xs">
             {shortId(r.id)}
           </Link>
         </span>
@@ -118,7 +118,7 @@ export function ExportStanding({ trace }) {
 
   return (
     <section>
-      <h2 className="mb-2 text-[13px] font-semibold text-ink">Export standing</h2>
+      <h2 className="label mb-2 text-ink-dim">Export standing</h2>
       <div className="space-y-2.5 text-[13px]">
         {included ? (
           <p className="text-good">● In the SFT export — this is the session&apos;s longest clean transcript.</p>
@@ -142,7 +142,7 @@ export function ExportStanding({ trace }) {
         {!pair && skip ? (
           <p className="text-ink-mute">○ Preference candidate, unpaired — {skip.reason.replaceAll("_", " ")}.</p>
         ) : null}
-        <Link href="/exports" className="inline-block text-xs text-accent hover:underline">
+        <Link href="/exports" className="ulink inline-block text-xs">
           Exports &amp; exclusions →
         </Link>
       </div>

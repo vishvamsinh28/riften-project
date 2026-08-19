@@ -11,15 +11,15 @@ import { fmtPct } from "@/lib/format";
 export function Kpi({ label, value, sub, href }) {
   const body = (
     <>
-      <div className="text-2xs font-medium text-ink-mute">{label}</div>
-      <div className="num mt-1 text-[20px] font-semibold leading-6 tracking-[-0.02em] text-ink">{value}</div>
-      {sub ? <div className="mt-0.5 text-2xs text-ink-mute">{sub}</div> : null}
+      <div className="microlabel">{label}</div>
+      <div className="font-doto mt-1.5 text-[26px] font-bold leading-none text-ink">{value}</div>
+      {sub ? <div className="mt-1 text-2xs text-ink-mute">{sub}</div> : null}
     </>
   );
-  const cls = "block min-w-0 rounded-md px-4 py-1 transition-colors duration-150 first:pl-0";
+  const cls = "block min-w-0 px-4 py-1 transition-colors duration-150 first:pl-0";
   if (!href) return <div className={cls}>{body}</div>;
   return (
-    <Link href={href} className={`${cls} hover:bg-raised/60`}>
+    <Link href={href} className={`${cls} hover:bg-raised`}>
       {body}
     </Link>
   );
@@ -42,7 +42,7 @@ export function Panel({ title, aside, children, className = "", flush = false })
   return (
     <section className={className}>
       <header className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[13px] font-semibold tracking-[-0.006em] text-ink">{title}</h2>
+        <h2 className="label text-ink-dim">{title}</h2>
         {aside ? <span className="text-2xs text-ink-mute">{aside}</span> : null}
       </header>
       <div>{children}</div>
@@ -55,7 +55,7 @@ export function SignalRow({ label, count, total, href, dot = "bg-edge-strong" })
   return (
     <Link
       href={href}
-      className="-mx-2 flex items-center justify-between rounded-md px-2 py-[5px] transition-colors duration-150 hover:bg-raised"
+      className="-mx-2 flex items-center justify-between px-2 py-[5px] transition-colors duration-150 hover:bg-raised"
     >
       <span className="flex items-center gap-2 text-[13px] text-ink-dim">
         <span className={`size-1.5 rounded-full ${dot}`} />

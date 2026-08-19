@@ -41,11 +41,11 @@ export function NavLinks() {
             href={href}
             aria-current={active ? "page" : undefined}
             title={label}
-            className={`flex items-center gap-2.5 overflow-hidden whitespace-nowrap rounded-md px-2 py-[7px] text-[13px] transition-colors duration-150 ${
-              active ? "bg-accent-soft font-medium text-ink" : "text-ink-dim hover:bg-raised hover:text-ink"
+            className={`label flex items-center gap-2.5 overflow-hidden whitespace-nowrap px-2 py-[7px] transition-colors duration-150 ${
+              active ? "text-ink shadow-[inset_2px_0_0_var(--color-accent-strong)] hover:bg-raised" : "text-ink-dim hover:bg-raised hover:text-ink"
             }`}
           >
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" className={`shrink-0 ${active ? "text-accent" : "text-ink-mute"}`}>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" className={`shrink-0 ${active ? "text-ink" : "text-ink-mute"}`}>
               {ICONS[icon]}
             </svg>
             <span className="group-data-collapsed/side:hidden">{label}</span>
@@ -65,8 +65,8 @@ export function MobileNav() {
         <Link
           key={href}
           href={href}
-          className={`whitespace-nowrap rounded-md px-2.5 py-1 text-[13px] transition-colors ${
-            isActive(href, pathname) ? "bg-raised font-medium text-ink" : "text-ink-dim hover:text-ink"
+          className={`label whitespace-nowrap px-2.5 py-1 transition-colors ${
+            isActive(href, pathname) ? "text-ink underline decoration-accent-strong underline-offset-4" : "text-ink-dim hover:text-ink"
           }`}
         >
           {label}

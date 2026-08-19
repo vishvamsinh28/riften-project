@@ -5,13 +5,13 @@ import { PREF_SOURCES } from "@/lib/export-reasons";
  * headline counts, the keep/drop story, and a collapsible line preview.
  */
 
-/** Accent download button hitting a JSONL route handler. */
+/** Primary download button hitting a JSONL route handler. */
 export function DownloadButton({ href, children }) {
   return (
     <a
       href={href}
       download
-      className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md bg-accent-strong px-3 py-1.5 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#3d7af0]"
+      className="btn-primary inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap normal-case"
     >
       <svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
         <path d="M7 1v8M3.5 6 7 9.5 10.5 6M2 12.5h10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -26,7 +26,7 @@ function LinePreview({ line }) {
   if (!line) return null;
   return (
     <details className="group">
-      <summary className="cursor-pointer select-none text-xs text-ink-mute transition-colors hover:text-ink">
+      <summary className="microlabel cursor-pointer select-none transition-colors hover:text-ink">
         <span className="group-open:hidden">Preview a line ▸</span>
         <span className="hidden group-open:inline">Preview a line ▾</span>
       </summary>
@@ -43,8 +43,8 @@ function CardShell({ title, subtitle, download, children }) {
     <section>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[14px] font-semibold tracking-[-0.006em] text-ink">{title}</h2>
-          <p className="mt-0.5 text-xs text-ink-mute">{subtitle}</p>
+          <h2 className="label text-ink-dim">{title}</h2>
+          <p className="mt-1 text-2xs lowercase text-ink-mute">{subtitle}</p>
         </div>
         {download}
       </div>
@@ -57,11 +57,11 @@ function CardShell({ title, subtitle, download, children }) {
 function Stat({ value, unit, label }) {
   return (
     <div>
-      <div className="num text-xl font-semibold text-ink">
+      <div className="font-doto text-[26px] font-bold leading-none text-ink">
         {value}
-        {unit ? <span className="text-sm text-ink-dim"> {unit}</span> : null}
+        {unit ? <span className="font-mono text-xs text-ink-dim"> {unit}</span> : null}
       </div>
-      <div className="text-xs text-ink-mute">{label}</div>
+      <div className="microlabel mt-1.5">{label}</div>
     </div>
   );
 }
@@ -92,7 +92,7 @@ export function SftCard({ sft, bytes }) {
           <p>
             <span className="text-ink">Masked:</span> <span className="num text-warn">{sft.maskedCount}</span> rejected
             answer{sft.maskedCount === 1 ? "" : "s"} the user continued from sit inside kept transcripts — exported with{" "}
-            <code className="rounded bg-raised px-1 font-mono text-xs text-ink-dim">weight: 0</code> so they are context, never training
+            <code className="bg-surface px-1 font-mono text-xs text-ink-dim">weight: 0</code> so they are context, never training
             targets.
           </p>
         ) : null}
@@ -119,7 +119,7 @@ export function PreferenceCard({ pref, bytes }) {
           <div key={key} className="flex items-baseline justify-between gap-3 text-[13px]">
             <span className="text-ink">{meta.label}</span>
             <span className="mx-1 flex-1 border-b border-dashed border-edge" />
-            <span className="num text-ink-dim">{pref.sourceCounts[key] ?? 0}</span>
+            <span className="num text-xs text-ink">{pref.sourceCounts[key] ?? 0}</span>
           </div>
         ))}
       </div>
